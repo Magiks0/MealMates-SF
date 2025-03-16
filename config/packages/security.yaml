@@ -1,0 +1,28 @@
+security:
+  providers:
+    app_user_provider:
+      entity:
+        class: App\Entity\User
+        property: email
+
+  password_hashers:
+    App\Entity\User: 'auto'
+
+  firewalls:
+    dev:
+      pattern: ^/(_(profiler|wdt)|css|images|js)/
+      security: false
+
+    main:
+      pattern: ^/api
+      stateless: true
+      provider: app_user_provider
+      json_login:
+        check_path: /api/login
+        username_path: email
+        password_path: password
+
+  access_control:
+    - { path: ^/api/register, roles: PUBLIC_ACCESS }
+    - { path: ^/api/login, roles: PUBLIC_ACCESS }
+    - { path: ^/api, roles: ROLE_USER }
