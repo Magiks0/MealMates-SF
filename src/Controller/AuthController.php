@@ -82,7 +82,8 @@ class AuthController extends AbstractController
     public function googleLogin(
         Request $request,
         UserRepository $userRepo,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        JWTTokenManagerInterface $JWTManager
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
         $googleIdToken = $data['token'] ?? null;
@@ -91,17 +92,38 @@ class AuthController extends AbstractController
             return new JsonResponse(['error' => 'Missing Google token'], 400);
         }
 
-        // Vérifier le token auprès de Google (ex: "https://oauth2.googleapis.com/tokeninfo?id_token=xxx")
-        // Extraire l'email
-        // Créer ou retrouver le user
-        // Retourner un token / message
+        // 1. Valider le token auprès de Google
+        $url = "https://oauth2.googleapis.com/tokeninfo?id_token=" . $googleIdToken;
+        $googleResponse = @file_get_contents($url);
+        if ($googleResponse === false) {
+            return new JsonResponse(['error' => 'Failed to validate token with Google'], 400);
+        }
+        $googleData = json_decode($googleResponse, true);
+        if (!isset($googleData['email'])) {
+            return new JsonResponse(['error' => 'Invalid Google token: email not found'], 400);
+        }
+        $email = $googleData['email'];
 
-        // (Exemple de code simplifié)
-        // $response = file_get_contents("https://oauth2.googleapis.com/tokeninfo?id_token=$googleIdToken");
-        // $googleData = json_decode($response, true);
-        // $email = $googleData['email'] ?? null;
+        // 2. Chercher si un utilisateur existe déjà avec cet email
+        $user = $userRepo->findOneBy(['email' => $email]);
+        if (!$user) {
+            // Si non, créer un nouvel utilisateur
+            $user = new User();
+            $user->setEmail($email);
+            // On peut définir un mot de passe aléatoire ou une chaîne fixe car ce compte sera géré via SSO
+            $user->setPassword('google'); // Note : ce mot de passe ne sera jamais utilisé
+            $user->setIsVerified(true); // On considère que Google a déjà validé l'email
+            $em->persist($user);
+            $em->flush();
+        }
 
-        return new JsonResponse(['message' => 'TODO: implement google login']);
+        // 3. Générer un token JWT pour l'utilisateur
+        $token = $JWTManager->create($user);
+
+        return new JsonResponse([
+            'message' => 'Logged in via Google successfully',
+            'token' => $token,
+        ]);
     }
 
 }
