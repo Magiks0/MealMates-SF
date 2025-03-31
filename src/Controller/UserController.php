@@ -2,21 +2,28 @@
 
 namespace App\Controller;
 
+use App\Entity\User;
+use App\Repository\PreferencesRepository;
 use App\Repository\UserRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 
-final class UserController extends AbstractController
+#[Route('/api')]
+class UserController extends AbstractController
 {
-    #[Route('/api/user', name: 'app_user')]
-    public function index(UserRepository $userRepository, UserInterface $user): JsonResponse
+    #[Route('/users', name: 'users', methods: ['GET'])]
+    public function getUsers(UserRepository $userRepository, SerializerInterface $serializer): JsonResponse
     {
-        $userData = $userRepository->findUserInfo($user);
+        $users = $userRepository->findAll();
+        $jsonUsers = $serializer->serialize($users, 'json');
 
-        if (!$userData) {
-            return new JsonResponse(['message' => 'Utilisateur non trouvé.'], 404);
+        return new JsonResponse($jsonUsers, Response::HTTP_OK, [], true);
         }
 
         // Récupération des informations de l'utilisateur
