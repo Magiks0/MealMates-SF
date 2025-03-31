@@ -24,20 +24,41 @@ class UserController extends AbstractController
         $jsonUsers = $serializer->serialize($users, 'json');
 
         return new JsonResponse($jsonUsers, Response::HTTP_OK, [], true);
+    }
+
+    #[Route('/users/update/{id}', name: 'update_user', methods: ['PUT'])]
+    public function updateUser(
+        int $id,
+        Request $request,
+        UserRepository $userRepository,
+        EntityManagerInterface $entityManager,
+        SerializerInterface $serializer
+    ): JsonResponse {
+        $user = $userRepository->find($id);
+
+        if (!$user) {
+            return new JsonResponse(['message' => 'Utilisateur non trouvé'], Response::HTTP_NOT_FOUND);
         }
 
-        // Récupération des informations de l'utilisateur
-        $data = [
-            'id' => $userData->getId(),
-            'email' => $userData->getEmail(),
-            'username' => $userData->getUsername(),
-            'adress' => $userData->getAdress(),
-            'image_url' => $userData->getImageUrl(),
-            'is_verified' => $userData->isVerified(),
-            'availabilities' => $userData->getAvailabilities()->toArray(),
-            'preferences' => $userData->getPreferences()->toArray(),
-        ];
+        $data = json_decode($request->getContent(), true);
 
-        return $this->json($data);
+        if (isset($data['username'])) {
+            $user->setUsername($data['username']);
+        }
+        if (isset($data['adress'])) {
+            $user->setAdress($data['adress']);
+        }
+        if (isset($data['image_url'])) {
+            $user->setImageUrl($data['image_url']);
+        }
+
+        $entityManager->persist($user);
+        $entityManager->flush();
+
+        $jsonUser = $serializer->serialize($user, 'json', [AbstractNormalizer::IGNORED_ATTRIBUTES => ['password']]);
+
+        return new JsonResponse($jsonUser, Response::HTTP_OK, [], true);
     }
+
+    
 }
