@@ -32,7 +32,9 @@ class UserFixtures extends Fixture
             $user->setEmail($userData['email']);
             $user->setPassword($userData['password']);
             $user->setIsVerified($userData['isVerified']);
+            $user->setNote(random_int(2,5));
             $manager->persist($user);
+            $this->addReference(self::REFERENCE_IDENTIFIER.$i, $user);
         }
 
         $manager->flush();

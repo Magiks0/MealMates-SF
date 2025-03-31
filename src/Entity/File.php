@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Entity\Traits\TimestampableTrait;
 use App\Repository\FileRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: FileRepository::class)]
 class File
@@ -16,12 +17,15 @@ class File
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups('product:read')]
     private ?string $originalName = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups('product:read')]
     private ?string $size = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups('product:read')]
     private ?string $path = null;
 
     #[ORM\ManyToOne(inversedBy: 'files')]

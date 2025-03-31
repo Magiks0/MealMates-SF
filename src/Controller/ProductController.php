@@ -18,8 +18,8 @@ class ProductController extends AbstractController
     public function getFilteredProducts(SerializerInterface $serializer, ProductRepository $productRepository, Request $request): JsonResponse
     {
         $filters = $request->query->all();
-        $products = $productRepository->findFilteredProducts($filters, $serializer);
-        $jsonProducts = $serializer->serialize($products, 'json');
+        $products = $productRepository->findFilteredProducts($filters);
+        $jsonProducts = $serializer->serialize($products, 'json', ['groups' => 'product:read']);
 
         return new JsonResponse($jsonProducts, Response::HTTP_OK, [], true);
     }

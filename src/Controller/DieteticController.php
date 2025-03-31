@@ -18,7 +18,7 @@ class DieteticController extends AbstractController
     public function getDietetics(DieteticRepository $dieteticRepository, SerializerInterface $serializer): JsonResponse
     {
         $dietetics = $dieteticRepository->findAll();
-        $jsonDietetics = $serializer->serialize($dietetics, 'json');
+        $jsonDietetics = $serializer->serialize($dietetics, 'json', ['groups' => 'dietetic:read']);
 
         return new JsonResponse($jsonDietetics, Response::HTTP_OK, [], true);
     }

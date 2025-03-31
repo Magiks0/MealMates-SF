@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: ProductRepository::class)]
 class Product
@@ -20,27 +21,35 @@ class Product
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups('product:read')]
     private ?string $title = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups('product:read')]
     private ?string $description = null;
 
     #[ORM\Column]
+    #[Groups('product:read')]
     private ?int $quantity = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
+    #[Groups('product:read')]
     private ?\DateTimeInterface $peremptionDate = null;
 
     #[ORM\Column]
+    #[Groups('product:read')]
     private ?int $price = null;
 
     #[ORM\Column]
+    #[Groups('product:read')]
     private ?bool $donation = false;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
+    #[Groups('product:read')]
     private ?\DateTimeInterface $collection_date = null;
 
     #[ORM\ManyToOne(inversedBy: 'products')]
+    #[Groups('product:read')]
     private ?User $user = null;
 
     /**
@@ -50,9 +59,11 @@ class Product
     private Collection $files;
 
     #[ORM\ManyToOne(inversedBy: 'products')]
+    #[Groups('product:read')]
     private ?Type $type = null;
 
     #[ORM\ManyToOne(inversedBy: 'products')]
+    #[Groups('product:read')]
     private ?Dietetic $dietetic = null;
 
     public function __construct()

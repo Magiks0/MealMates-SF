@@ -27,6 +27,7 @@ class TypeFixtures extends Fixture
             $type = new Type();
             $type->setName($typeData['name']);
             $manager->persist($type);
+            $this->addReference(self::REFERENCE_IDENTIFIER.$i, $type);
         }
 
         $manager->flush();

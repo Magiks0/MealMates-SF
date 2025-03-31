@@ -20,12 +20,14 @@ class DieteticFixtures extends Fixture
             ['name' => 'Paleo'],
             ['name' => 'Méditerranéen'],
             ['name' => 'Hypocalorique'],
+            ['name' => 'Sans lactose']
         ];
 
-        foreach ($diets as $dietData) {
+        foreach ($diets as $i => $dietData) {
             $diet = new Dietetic();
             $diet->setName($dietData['name']);
             $manager->persist($diet);
+            $this->addReference(self::REFERENCE_IDENTIFIER.$i, $diet);
         }
 
         $manager->flush();

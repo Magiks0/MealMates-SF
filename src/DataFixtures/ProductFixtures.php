@@ -3,6 +3,7 @@
 namespace App\DataFixtures;
 
 use Doctrine\Bundle\FixturesBundle\Fixture;
+use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 use Doctrine\Persistence\ObjectManager;
 use App\Entity\Product;
 use App\Entity\User;
@@ -10,7 +11,7 @@ use App\Entity\Type;
 use App\Entity\Dietetic;
 use DateTime;
 
-class ProductFixtures extends Fixture
+class ProductFixtures extends Fixture implements DependentFixtureInterface
 {
     public function load(ObjectManager $manager): void
     {
@@ -23,9 +24,9 @@ class ProductFixtures extends Fixture
                 'price' => 5,
                 'donation' => false,
                 'collectionDate' => new DateTime('+2 days'),
-                'user' => $manager->getRepository(User::class)->find(1),
-                'type' => $manager->getRepository(Type::class)->find(2),
-                'dietetic' => $manager->getRepository(Dietetic::class)->find(1),
+                'user' => $this->getReference(UserFixtures::REFERENCE_IDENTIFIER.'1', User::class),
+                'type' => $this->getReference(TypeFixtures::REFERENCE_IDENTIFIER.'1', Type::class),
+                'dietetic' => $this->getReference(DieteticFixtures::REFERENCE_IDENTIFIER.'0', Dietetic::class),
             ],
             [
                 'title' => 'Riz Complet',
@@ -35,9 +36,9 @@ class ProductFixtures extends Fixture
                 'price' => 3,
                 'donation' => false,
                 'collectionDate' => new DateTime('+3 days'),
-                'user' => $manager->getRepository(User::class)->find(2),
-                'type' => $manager->getRepository(Type::class)->find(7),
-                'dietetic' => $manager->getRepository(Dietetic::class)->find(3),
+                'user' => $this->getReference(UserFixtures::REFERENCE_IDENTIFIER.'0', User::class),
+                'type' => $this->getReference(TypeFixtures::REFERENCE_IDENTIFIER.'5', Type::class),
+                'dietetic' => $this->getReference(DieteticFixtures::REFERENCE_IDENTIFIER.'0', Dietetic::class),
             ],
             [
                 'title' => 'Fromage de Chèvre',
@@ -47,9 +48,9 @@ class ProductFixtures extends Fixture
                 'price' => 8,
                 'donation' => false,
                 'collectionDate' => new DateTime('+4 days'),
-                'user' => $manager->getRepository(User::class)->find(3),
-                'type' => $manager->getRepository(Type::class)->find(5),
-                'dietetic' => $manager->getRepository(Dietetic::class)->find(2),
+                'user' => $this->getReference(UserFixtures::REFERENCE_IDENTIFIER.'2', User::class),
+                'type' => $this->getReference(TypeFixtures::REFERENCE_IDENTIFIER.'4',Type::class),
+                'dietetic' => $this->getReference(DieteticFixtures::REFERENCE_IDENTIFIER.'7', Dietetic::class),
             ]
         ];
 
@@ -71,5 +72,14 @@ class ProductFixtures extends Fixture
         }
 
         $manager->flush();
+    }
+
+    public function getDependencies(): array
+    {
+        return [
+            UserFixtures::class,
+            TypeFixtures::class,
+            DieteticFixtures::class,
+        ];
     }
 }
