@@ -31,7 +31,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 255, nullable: true)]
     #[Groups('product:read')]
-    private ?int $note = null;
+    private ?float $note = null;
 
     public function getId(): ?int
     {
@@ -94,12 +94,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getNote(): ?int
+    public function getNote(): ?float
     {
         return $this->note;
     }
 
-    public function setNote(int $note): self
+    public function setNote(?float $note): self
     {
         $this->note = $note;
         return $this;
