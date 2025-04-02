@@ -111,7 +111,7 @@ class InitDataCommand extends Command
             // UTILISATEUR 1: Lucas Dupas - Produits bio et donations
             [
                 'title' => 'Pommes Gala Bio',
-                'price' => 250, // 2.50€
+                'price' => 2.50, // 2.50€
                 'quantity' => 6,
                 'type' => 'Fruits',
                 'dietetic' => 'Bio',
@@ -125,7 +125,7 @@ class InitDataCommand extends Command
             ],
             [
                 'title' => 'Pain aux Céréales Sans Gluten',
-                'price' => 380, // 3.80€
+                'price' => 3.80, // 3.80€
                 'quantity' => 2,
                 'type' => 'Boulangerie & Pâtisserie',
                 'dietetic' => 'Sans gluten',
@@ -139,7 +139,7 @@ class InitDataCommand extends Command
             ],
             [
                 'title' => 'Lait d\'Amande Bio',
-                'price' => 320, // 3.20€
+                'price' => 3.20, // 3.20€
                 'quantity' => 3,
                 'type' => 'Boissons',
                 'dietetic' => 'Vegan',
@@ -155,7 +155,7 @@ class InitDataCommand extends Command
             // UTILISATEUR 2: Tom Zarb - Produits premium et viandes
             [
                 'title' => 'Steak Haché Charolais 5%',
-                'price' => 750, // 7.50€
+                'price' => 7.50, // 7.50€
                 'quantity' => 4,
                 'type' => 'Viandes',
                 'dietetic' => 'Riche en protéines',
@@ -169,7 +169,7 @@ class InitDataCommand extends Command
             ],
             [
                 'title' => 'Saumon Fumé d\'Écosse',
-                'price' => 995, // 9.95€
+                'price' => 10, // 9.95€
                 'quantity' => 2,
                 'type' => 'Poissons & Fruits de mer',
                 'dietetic' => 'Méditerranéen',
@@ -183,7 +183,7 @@ class InitDataCommand extends Command
             ],
             [
                 'title' => 'Riz Basmati Premium',
-                'price' => 420, // 4.20€
+                'price' => 4.20, // 4.20€
                 'quantity' => 3,
                 'type' => 'Épicerie salée',
                 'dietetic' => 'Sans allergènes',
@@ -199,7 +199,7 @@ class InitDataCommand extends Command
             // UTILISATEUR 3: Florian Sauvage - Produits locaux et artisanaux
             [
                 'title' => 'Miel de Lavande Artisanal',
-                'price' => 890, // 8.90€
+                'price' => 8.90, // 8.90€
                 'quantity' => 2,
                 'type' => 'Épicerie sucrée',
                 'dietetic' => 'Bio',
@@ -213,7 +213,7 @@ class InitDataCommand extends Command
             ],
             [
                 'title' => 'Fromage de Chèvre Fermier',
-                'price' => 650, // 6.50€
+                'price' => 6.50, // 6.50€
                 'quantity' => 3,
                 'type' => 'Produits laitiers',
                 'dietetic' => 'Méditerranéen',
@@ -227,7 +227,7 @@ class InitDataCommand extends Command
             ],
             [
                 'title' => 'Noix de Cajou Toastées Bio',
-                'price' => 570, // 5.70€
+                'price' => 5.70, // 5.70€
                 'quantity' => 4,
                 'type' => 'Snacking & Apéritifs',
                 'dietetic' => 'Riche en protéines',
@@ -241,7 +241,7 @@ class InitDataCommand extends Command
             ],
             [
                 'title' => 'Carottes Bio de Saison',
-                'price' => 190, // 1.90€
+                'price' => 1.90, // 1.90€
                 'quantity' => 8,
                 'type' => 'Légumes',
                 'dietetic' => 'Bio',
@@ -255,7 +255,7 @@ class InitDataCommand extends Command
             ],
             [
                 'title' => 'Yaourt Grec Nature',
-                'price' => 270, // 2.70€
+                'price' => 2.70, // 2.70€
                 'quantity' => 4,
                 'type' => 'Produits laitiers',
                 'dietetic' => 'Riche en protéines',
@@ -269,7 +269,7 @@ class InitDataCommand extends Command
             ],
             [
                 'title' => 'Chocolat Noir 85% Équitable',
-                'price' => 350, // 3.50€
+                'price' => 3.50, // 3.50€
                 'quantity' => 5,
                 'type' => 'Confiseries',
                 'dietetic' => 'Faible en sucres',
@@ -283,7 +283,7 @@ class InitDataCommand extends Command
             ],
             [
                 'title' => 'Huile d\'Olive Extra Vierge Bio',
-                'price' => 780, // 7.80€
+                'price' => 7, // 7.80€
                 'quantity' => 2,
                 'type' => 'Condiments & Assaisonnements',
                 'dietetic' => 'Bio',
@@ -297,7 +297,7 @@ class InitDataCommand extends Command
             ],
             [
                 'title' => 'Spaghetti Complets Bio',
-                'price' => 220, // 2.20€
+                'price' => 2.20, // 2.20€
                 'quantity' => 6,
                 'type' => 'Épicerie salée',
                 'dietetic' => 'Végétarien',
@@ -311,7 +311,7 @@ class InitDataCommand extends Command
             ],
             [
                 'title' => 'Quinoa Tricolore',
-                'price' => 430, // 4.30€
+                'price' => 4.30, // 4.30€
                 'quantity' => 3,
                 'type' => 'Céréales & Petit-déjeuner',
                 'dietetic' => 'Sans gluten',
