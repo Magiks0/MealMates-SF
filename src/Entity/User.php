@@ -20,13 +20,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups('product:read')]
     private ?string $email = null;
 
+    #[ORM\Column]
+    private array $roles = [];
+
     #[ORM\Column(length: 255)]
     private ?string $password = null;
 
     #[ORM\Column]
     private ?bool $isVerified = false;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     #[Groups('product:read')]
     private ?int $note = null;
 
@@ -46,16 +49,21 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    public function getRoles(): array
+    {
+        return $this->roles;
+    }
+
+    public function setRoles(array $roles): self
+    {
+        $this->roles = $roles;
+        return $this;
+    }
+
     // Cette méthode remplace getUsername() dans Symfony 5.3+ et 7
     public function getUserIdentifier(): string
     {
         return (string) $this->email;
-    }
-
-    // Retourne le(s) rôle(s) de l'utilisateur. Ici, on lui attribue ROLE_USER par défaut.
-    public function getRoles(): array
-    {
-        return ['ROLE_USER'];
     }
 
     public function getPassword(): ?string
