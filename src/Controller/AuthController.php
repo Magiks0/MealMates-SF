@@ -37,26 +37,32 @@ class AuthController extends AbstractController
         }
 
         // Création du user
-        $user = new User();
-        $user->setEmail($email);
-        // Hachage du mot de passe
-        $hashedPassword = $passwordHasher->hashPassword($user, $plainPassword);
-        $user->setPassword($hashedPassword);
+        try {
+            $user = new User();
+            $user->setEmail($email);
+            $hashedPassword = $passwordHasher->hashPassword($user, $plainPassword);
+            $user->setPassword($hashedPassword);
+            $user->setRoles(['ROLE_USER']);
+            $em->persist($user);
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => $e->getMessage()], 400);
+        }
+
 
         // ex: isVerified = false par défaut
         // $user->setIsVerified(false);
 
         // Sauvegarde
-        $em->persist($user);
+
         $em->flush();
 
         return new JsonResponse(['message' => 'User created'], 201);
     }
 
-    #[Route('/api/login', name: 'app_login', methods: ['POST'])]
+    #[Route('/api/login', name: 'app_login', methods: ['GET','POST'])]
     public function login(
         Request $request,
-        UserRepository $userRepo,
+        UserRepository $userRepository,
         UserPasswordHasherInterface $passwordHasher,
         JWTTokenManagerInterface $JWTManager
     ): JsonResponse {
@@ -64,7 +70,8 @@ class AuthController extends AbstractController
         $email = $data['email'] ?? null;
         $plainPassword = $data['password'] ?? null;
 
-        $user = $userRepo->findOneBy(['email' => $email]);
+        $user = $userRepository->findOneBy(['email' => $email]);
+
         if (!$user || !$passwordHasher->isPasswordValid($user, $plainPassword)) {
             return new JsonResponse(['error' => 'Bad credentials'], 401);
         }
