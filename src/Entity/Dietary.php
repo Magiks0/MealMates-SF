@@ -2,14 +2,14 @@
 
 namespace App\Entity;
 
-use App\Repository\DieteticRepository;
+use App\Repository\DietaryRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 
-#[ORM\Entity(repositoryClass: DieteticRepository::class)]
-class Dietetic
+#[ORM\Entity(repositoryClass: DietaryRepository::class)]
+class Dietary
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -17,20 +17,20 @@ class Dietetic
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['product:read', 'dietetic:read'])]
+    #[Groups(['product:read', 'dietaries:read'])]
     private ?string $name = null;
-
-    /**
-     * @var Collection<int, Product>
-     */
-    #[ORM\OneToMany(targetEntity: Product::class, mappedBy: 'dietetic')]
-    private Collection $products;
 
     /**
      * @var Collection<int, User>
      */
-    #[ORM\ManyToMany(targetEntity: User::class, mappedBy: 'dietetics')]
+    #[ORM\ManyToMany(targetEntity: User::class, mappedBy: 'dietaries')]
     private Collection $users;
+
+    /**
+     * @var Collection<int, Product>
+     */
+    #[ORM\ManyToMany(targetEntity: Product::class, mappedBy: 'dietaries')]
+    private Collection $products;
 
     public function __construct()
     {
@@ -51,36 +51,6 @@ class Dietetic
     public function setName(string $name): static
     {
         $this->name = $name;
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Product>
-     */
-    public function getProducts(): Collection
-    {
-        return $this->products;
-    }
-
-    public function addProduct(Product $product): static
-    {
-        if (!$this->products->contains($product)) {
-            $this->products->add($product);
-            $product->setDietetic($this);
-        }
-
-        return $this;
-    }
-
-    public function removeProduct(Product $product): static
-    {
-        if ($this->products->removeElement($product)) {
-            // set the owning side to null (unless already changed)
-            if ($product->getDietetic() === $this) {
-                $product->setDietetic(null);
-            }
-        }
 
         return $this;
     }
@@ -107,6 +77,33 @@ class Dietetic
     {
         if ($this->users->removeElement($user)) {
             $user->removeDietetic($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Product>
+     */
+    public function getProducts(): Collection
+    {
+        return $this->products;
+    }
+
+    public function addProduct(Product $product): static
+    {
+        if (!$this->products->contains($product)) {
+            $this->products->add($product);
+            $product->addDietary($this);
+        }
+
+        return $this;
+    }
+
+    public function removeProduct(Product $product): static
+    {
+        if ($this->products->removeElement($product)) {
+            $product->removeDietary($this);
         }
 
         return $this;

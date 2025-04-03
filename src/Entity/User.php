@@ -11,7 +11,7 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
-class User implements UserInterface, PasswordAuthenticatedUserInterface
+class User implements \Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -36,16 +36,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?float $note = null;
 
     /**
-     * @var Collection<int, Availabilities>
+     * @var Collection<int, Availability>
      */
-    #[ORM\OneToMany(targetEntity: Availabilities::class, mappedBy: 'user_id', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: Availability::class, mappedBy: 'user_id', orphanRemoval: true)]
     private Collection $availabilities;
-
-    /**
-     * @var Collection<int, Preferences>
-     */
-    #[ORM\ManyToMany(targetEntity: Preferences::class, mappedBy: 'user_id')]
-    private Collection $preferences;
 
     #[ORM\Column(length: 255)]
     private ?string $username = null;
@@ -56,10 +50,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $image_url = null;
 
+    /**
+     * @var Collection<int, Dietary>
+     */
+    #[ORM\ManyToMany(targetEntity: Dietary::class, inversedBy: 'users')]
+    private Collection $dietaries;
+
     public function __construct()
     {
         $this->availabilities = new ArrayCollection();
-        $this->preferences = new ArrayCollection();
+        $this->dietaries = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -118,14 +118,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /**
-     * @return Collection<int, Availabilities>
+     * @return Collection<int, Availability>
      */
     public function getAvailabilities(): Collection
     {
         return $this->availabilities;
     }
 
-    public function addAvailability(Availabilities $availability): static
+    public function addAvailability(Availability $availability): static
     {
         if (!$this->availabilities->contains($availability)) {
             $this->availabilities->add($availability);
@@ -135,40 +135,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function removeAvailability(Availabilities $availability): static
+    public function removeAvailability(Availability $availability): static
     {
         if ($this->availabilities->removeElement($availability)) {
             // set the owning side to null (unless already changed)
             if ($availability->getUser() === $this) {
                 $availability->setUser(null);
             }
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Preferences>
-     */
-    public function getPreferences(): Collection
-    {
-        return $this->preferences;
-    }
-
-    public function addPreference(Preferences $preference): static
-    {
-        if (!$this->preferences->contains($preference)) {
-            $this->preferences->add($preference);
-            $preference->addUserId($this);
-        }
-
-        return $this;
-    }
-
-    public function removePreference(Preferences $preference): static
-    {
-        if ($this->preferences->removeElement($preference)) {
-            $preference->removeUserId($this);
         }
 
         return $this;
@@ -218,6 +191,30 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setNote(?float $note): self
     {
         $this->note = $note;
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Dietary>
+     */
+    public function getDietaries(): Collection
+    {
+        return $this->dietaries;
+    }
+
+    public function addDietetic(Dietary $dietary): static
+    {
+        if (!$this->dietaries->contains($dietary)) {
+            $this->dietaries->add($dietary);
+        }
+
+        return $this;
+    }
+
+    public function removeDietetic(Dietary $dietary): static
+    {
+        $this->dietaries->removeElement($dietary);
+
         return $this;
     }
 }

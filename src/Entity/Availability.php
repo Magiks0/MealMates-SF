@@ -2,13 +2,13 @@
 
 namespace App\Entity;
 
-use App\Repository\AvailabilitiesRepository;
+use App\Repository\AvailabilityRepository;
 use App\Enum\DayOfWeek;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: AvailabilitiesRepository::class)]
-class Availabilities
+#[ORM\Entity(repositoryClass: AvailabilityRepository::class)]
+class Availability
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]

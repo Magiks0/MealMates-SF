@@ -2,8 +2,7 @@
 
 namespace App\Controller;
 
-use App\Entity\User;
-use App\Repository\PreferencesRepository;
+use App\Repository\DietaryRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -64,7 +63,7 @@ class UserController extends AbstractController
     public function updatePreferences(
         Request $request,
         EntityManagerInterface $entityManager,
-        PreferencesRepository $preferencesRepository
+        DietaryRepository $dietaryRepository,
     ): JsonResponse {
         $user = $this->getUser();
         
@@ -79,16 +78,16 @@ class UserController extends AbstractController
         }
 
         // Vider les préférences existantes
-        foreach ($user->getPreferences() as $preference) {
+        foreach ($user->getDietaries() as $preference) {
             $user->removePreference($preference);
         }
 
         // Ajouter les nouvelles préférences
         foreach ($data['preferences'] as $preferenceId) {
-            $preference = $preferencesRepository->find($preferenceId);
+            $preference = $dietaryRepository->find($preferenceId);
             
             if ($preference) {
-                $user->addPreference($preference);
+                $user->addDietary($preference);
             }
         }
 

@@ -62,13 +62,16 @@ class Product
     #[Groups('product:read')]
     private ?Type $type = null;
 
-    #[ORM\ManyToOne(inversedBy: 'products')]
-    #[Groups('product:read')]
-    private ?Dietetic $dietetic = null;
+    /**
+     * @var Collection<int, Dietary>
+     */
+    #[ORM\ManyToMany(targetEntity: Dietary::class, inversedBy: 'products')]
+    private Collection $dietaries;
 
     public function __construct()
     {
         $this->files = new ArrayCollection();
+        $this->dietaries = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -214,14 +217,26 @@ class Product
         return $this;
     }
 
-    public function getDietetic(): ?Dietetic
+    /**
+     * @return Collection<int, self>
+     */
+    public function getDietaries(): Collection
     {
-        return $this->dietetic;
+        return $this->dietaries;
     }
 
-    public function setDietetic(?Dietetic $dietetic): static
+    public function addDietary(self $dietary): static
     {
-        $this->dietetic = $dietetic;
+        if (!$this->dietaries->contains($dietary)) {
+            $this->dietaries->add($dietary);
+        }
+
+        return $this;
+    }
+
+    public function removeDietary(self $dietary): static
+    {
+        $this->dietaries->removeElement($dietary);
 
         return $this;
     }

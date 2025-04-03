@@ -2,17 +2,17 @@
 
 namespace App\Repository;
 
-use App\Entity\Availabilities;
+use App\Entity\Availability;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @extends ServiceEntityRepository<Availabilities>
+ * @extends ServiceEntityRepository<Availability>
  */
-class AvailabilitiesRepository extends ServiceEntityRepository
+class AvailabilityRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, Availabilities::class);
+        parent::__construct($registry, Availability::class);
     }
 }

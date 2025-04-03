@@ -2,10 +2,9 @@
 
 namespace App\Controller;
 
-use App\Entity\Availabilities;
 use App\Entity\Availability;
 use App\Enum\DayOfWeek;
-use App\Repository\AvailabilitiesRepository;
+use App\Repository\AvailabilityRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -13,16 +12,15 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\SerializerInterface;
-use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 
 #[Route('/api')]
 class AvailabilityController extends AbstractController
 {
     #[Route('/availabilities', name: 'availabilities', methods: ['GET'])]
-    public function getAvailabilitys(AvailabilitiesRepository $availabilityRepository, SerializerInterface $serializer): JsonResponse
+    public function getAvailabilities(AvailabilityRepository $availabilityRepository, SerializerInterface $serializer): JsonResponse
     {
-        $availabilitys = $availabilityRepository->findAll();
-        $jsonAvailabilities = $serializer->serialize($availabilitys, 'json');
+        $availabilities = $availabilityRepository->findAll();
+        $jsonAvailabilities = $serializer->serialize($availabilities, 'json');
 
         return new JsonResponse($jsonAvailabilities, Response::HTTP_OK, [], true);
     }
@@ -31,7 +29,7 @@ class AvailabilityController extends AbstractController
     public function updateAvailabilities(
         Request $request,
         EntityManagerInterface $entityManager,
-        AvailabilitiesRepository $availabilityRepository
+        AvailabilityRepository $availabilityRepository
     ): JsonResponse {
         $user = $this->getUser();
         
@@ -70,7 +68,7 @@ class AvailabilityController extends AbstractController
             ]);
 
             if (!$availability) {
-                $availability = new Availabilities();
+                $availability = new Availability();
                 $availability->setUser($user);
                 $availability->setDayOfWeek($dayOfWeek);
                 $entityManager->persist($availability);
@@ -82,7 +80,7 @@ class AvailabilityController extends AbstractController
 
         $entityManager->flush();
 
-        return new JsonResponse(['message' => 'Availabilities updated successfully'], Response::HTTP_OK);
+        return new JsonResponse(['message' => 'Availability updated successfully'], Response::HTTP_OK);
     }
 
 

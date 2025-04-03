@@ -3,7 +3,7 @@ namespace App\DataFixtures;
 
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
-use App\Entity\Availabilities;
+use App\Entity\Availability;
 use App\Entity\User;
 use App\Enum\DayOfWeek;
 use DateTime;
@@ -21,7 +21,7 @@ class AvailabilitiesFixtures extends Fixture implements DependentFixtureInterfac
         ];
 
         foreach ($availabilities as $availabilityData) {
-            $availability = new Availabilities();
+            $availability = new Availability();
             $availability->setUser($user);
             $availability->setDayOfWeek($availabilityData['day_of_week']);
             $availability->setMinTime($availabilityData['min_time']);
