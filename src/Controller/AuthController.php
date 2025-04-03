@@ -23,6 +23,7 @@ class AuthController extends AbstractController
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
 
+        $username = $data['username'];
         $email = $data['email'] ?? null;
         $plainPassword = $data['password'] ?? null;
 
@@ -38,21 +39,17 @@ class AuthController extends AbstractController
 
         // Création du user
         try {
-            $user = new User();
-            $user->setEmail($email);
+            $user = (new User())
+                ->setEmail($email)
+                ->setUsername($username)
+                ->setRoles(['ROLE_USER']);
+
             $hashedPassword = $passwordHasher->hashPassword($user, $plainPassword);
             $user->setPassword($hashedPassword);
-            $user->setRoles(['ROLE_USER']);
             $em->persist($user);
         } catch (\Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], 400);
         }
-
-
-        // ex: isVerified = false par défaut
-        // $user->setIsVerified(false);
-
-        // Sauvegarde
 
         $em->flush();
 

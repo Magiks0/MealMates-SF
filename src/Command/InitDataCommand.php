@@ -2,7 +2,7 @@
 
 namespace App\Command;
 
-use App\Entity\Dietetic;
+use App\Entity\Dietary;
 use App\Entity\Product;
 use App\Entity\Type;
 use App\Entity\User;
@@ -52,21 +52,21 @@ class InitDataCommand extends Command
             $typeEntities[$typeName] = $type;
         }
 
-        // --- IMPORT DIETETICS ---
-        $io->section('Importation des régimes diététiques');
-        $dieteticEntities = [];
-        $dietetics = [
+        // --- IMPORT DIETARIES ---
+        $io->section('Importation des régimes alimentaires');
+        $dietaryEntities = [];
+        $dietaries = [
             'Végétarien', 'Vegan', 'Sans gluten', 'Sans lactose', 'Halal',
             'Casher', 'Paleo', 'Bio', 'Riche en protéines', 'Faible en sucres',
             'Sans sel ajouté', 'Sans allergènes', 'Diabétique', 'Méditerranéen',
             'Flexitarien', 'Crudivore', 'Hypocalorique', 'Alimentation sportive'
         ];
 
-        foreach ($dietetics as $dieteticName) {
-            $dietetic = new Dietetic();
-            $dietetic->setName($dieteticName);
-            $this->entityManager->persist($dietetic);
-            $dieteticEntities[$dieteticName] = $dietetic;
+        foreach ($dietaries as $dietaryName) {
+            $dietary = new Dietary();
+            $dietary->setName($dietaryName);
+            $this->entityManager->persist($dietary);
+            $dietaryEntities[$dietaryName] = $dietary;
         }
 
         // --- IMPORT USERS ---
@@ -355,7 +355,7 @@ class InitDataCommand extends Command
                 $product->setType($typeEntities[$productData['type']]);
             }
 
-            // Link to Dietetic entity (ManyToOne)
+            // Link to Dietary entity (ManyToOne)
             if (isset($dieteticEntities[$productData['dietetic']])) {
                 $product->setDietetic($dieteticEntities[$productData['dietetic']]);
             }

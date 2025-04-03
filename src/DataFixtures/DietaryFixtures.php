@@ -2,11 +2,11 @@
 
 namespace App\DataFixtures;
 
-use App\Entity\Dietetic;
+use App\Entity\Dietary;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 
-class DieteticFixtures extends Fixture
+class DietaryFixtures extends Fixture
 {
     public const REFERENCE_IDENTIFIER = "dietetic_";
 
@@ -24,7 +24,7 @@ class DieteticFixtures extends Fixture
         ];
 
         foreach ($diets as $i => $dietData) {
-            $diet = new Dietetic();
+            $diet = new Dietary();
             $diet->setName($dietData['name']);
             $manager->persist($diet);
             $this->addReference(self::REFERENCE_IDENTIFIER.$i, $diet);
