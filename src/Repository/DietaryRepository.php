@@ -2,22 +2,22 @@
 
 namespace App\Repository;
 
-use App\Entity\Dietetic;
+use App\Entity\Dietary;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @extends ServiceEntityRepository<Dietetic>
+ * @extends ServiceEntityRepository<Dietary>
  */
 class DieteticRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, Dietetic::class);
+        parent::__construct($registry, Dietary::class);
     }
 
 //    /**
-//     * @return Dietetic[] Returns an array of Dietetic objects
+//     * @return Dietary[] Returns an array of Dietary objects
 //     */
 //    public function findByExampleField($value): array
 //    {
@@ -31,7 +31,7 @@ class DieteticRepository extends ServiceEntityRepository
 //        ;
 //    }
 
-//    public function findOneBySomeField($value): ?Dietetic
+//    public function findOneBySomeField($value): ?Dietary
 //    {
 //        return $this->createQueryBuilder('d')
 //            ->andWhere('d.exampleField = :val')

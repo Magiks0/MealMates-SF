@@ -6,12 +6,12 @@ use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use App\Entity\User;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use App\Entity\Preferences;
+use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 
-class UserFixtures extends Fixture
+class UserFixtures extends Fixture implements DependentFixtureInterface
 {
     public const REFERENCE_IDENTIFIER = "user_";
-
-    private UserPasswordHasherInterface $passwordHasher;
 
     public function __construct(UserPasswordHasherInterface $passwordHasher)
     {
@@ -32,11 +32,19 @@ class UserFixtures extends Fixture
             $user->setEmail($userData['email']);
             $user->setPassword($userData['password']);
             $user->setIsVerified($userData['isVerified']);
+            $user->$this->getReference('preference_' . rand(0, 4), Preferences::class)
             $user->setNote(random_int(2,5));
             $manager->persist($user);
             $this->addReference(self::REFERENCE_IDENTIFIER.$i, $user);
         }
 
         $manager->flush();
+    }
+
+    public function getDependencies(): array
+    {
+        return [
+            PreferencesFixtures::class,
+        ];
     }
 }

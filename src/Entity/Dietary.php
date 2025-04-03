@@ -26,9 +26,16 @@ class Dietetic
     #[ORM\OneToMany(targetEntity: Product::class, mappedBy: 'dietetic')]
     private Collection $products;
 
+    /**
+     * @var Collection<int, User>
+     */
+    #[ORM\ManyToMany(targetEntity: User::class, mappedBy: 'dietetics')]
+    private Collection $users;
+
     public function __construct()
     {
         $this->products = new ArrayCollection();
+        $this->users = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -73,6 +80,33 @@ class Dietetic
             if ($product->getDietetic() === $this) {
                 $product->setDietetic(null);
             }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, User>
+     */
+    public function getUsers(): Collection
+    {
+        return $this->users;
+    }
+
+    public function addUser(User $user): static
+    {
+        if (!$this->users->contains($user)) {
+            $this->users->add($user);
+            $user->addDietetic($this);
+        }
+
+        return $this;
+    }
+
+    public function removeUser(User $user): static
+    {
+        if ($this->users->removeElement($user)) {
+            $user->removeDietetic($this);
         }
 
         return $this;
