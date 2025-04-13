@@ -13,6 +13,8 @@ use DateTime;
 
 class ProductFixtures extends Fixture implements DependentFixtureInterface
 {
+    public const REFERENCE_IDENTIFIER = "product_";
+
     public function load(ObjectManager $manager): void
     {
         $products = [
@@ -69,6 +71,7 @@ class ProductFixtures extends Fixture implements DependentFixtureInterface
             $product->setCreatedAt(new DateTime());
             $product->setUpdatedAt(new DateTime());
             $manager->persist($product);
+            $this->addReference(self::REFERENCE_IDENTIFIER.$i, $product);
         }
 
         $manager->flush();
