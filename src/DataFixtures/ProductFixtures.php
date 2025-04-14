@@ -56,7 +56,7 @@ class ProductFixtures extends Fixture implements DependentFixtureInterface
             ]
         ];
 
-        foreach ($products as $productData) {
+        foreach ($products as $i => $productData) {
             $product = new Product();
             $product->setTitle($productData['title']);
             $product->setDescription($productData['description']);
@@ -71,6 +71,7 @@ class ProductFixtures extends Fixture implements DependentFixtureInterface
             $product->setCreatedAt(new DateTime());
             $product->setUpdatedAt(new DateTime());
             $manager->persist($product);
+            // Voici ma référence de produit 
             $this->addReference(self::REFERENCE_IDENTIFIER.$i, $product);
         }
 

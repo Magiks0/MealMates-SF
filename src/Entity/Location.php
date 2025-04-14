@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\LocationRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: LocationRepository::class)]
 class Location
@@ -14,16 +15,20 @@ class Location
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups('location:read')]
     private ?string $adress = null;
 
     #[ORM\Column]
+    #[Groups('location:read')]
     private ?float $longitude = null;
 
     #[ORM\Column]
+    #[Groups('location:read')]
     private ?float $latitude = null;
 
     #[ORM\OneToOne(inversedBy: 'location', cascade: ['persist', 'remove'])]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups('location:read')]
     private ?Product $product = null;
 
     public function getId(): ?int

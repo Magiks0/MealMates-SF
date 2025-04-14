@@ -17,61 +17,19 @@ class LocationFixtures extends Fixture implements DependentFixtureInterface
                 'adress' => '12 Rue de la République, 60300 Senlis',
                 'latitude' => 49.2072,
                 'longitude' => 2.5847,
-                'product_reference' => 'product_1'
+                'product' => $this->getReference(ProductFixtures::REFERENCE_IDENTIFIER.'0', Product::class),
             ],
             [
                 'adress' => '5 Place Henri IV, 60300 Senlis',
                 'latitude' => 49.2079,
                 'longitude' => 2.5836,
-                'product_reference' => 'product_2'
+                'product' => $this->getReference(ProductFixtures::REFERENCE_IDENTIFIER.'1', Product::class),
             ],
             [
                 'adress' => '3 Rue du Châtel, 60300 Senlis',
                 'latitude' => 49.2068,
                 'longitude' => 2.5830,
-                'product_reference' => 'product_3'
-            ],
-            [
-                'adress' => '18 Avenue de Creil, 60300 Senlis',
-                'latitude' => 49.2096,
-                'longitude' => 2.5750,
-                'product_reference' => 'product_4'
-            ],
-            [
-                'adress' => '2 Avenue des Chevreuils, 60300 Senlis',
-                'latitude' => 49.1980,
-                'longitude' => 2.5820,
-                'product_reference' => 'product_5'
-            ],
-            [
-                'adress' => '7 Rue Saint-Pierre, 60300 Senlis',
-                'latitude' => 49.2070,
-                'longitude' => 2.5865,
-                'product_reference' => 'product_6'
-            ],
-            [
-                'adress' => '22 Avenue de Chantilly, 60300 Senlis',
-                'latitude' => 49.2036,
-                'longitude' => 2.5960,
-                'product_reference' => 'product_7'
-            ],
-            [
-                'adress' => '15 Rue Bellon, 60300 Senlis',
-                'latitude' => 49.2060,
-                'longitude' => 2.5840,
-                'product_reference' => 'product_8'
-            ],
-            [
-                'adress' => '6 Rue du Puits Tiphaine, 60300 Senlis',
-                'latitude' => 49.2075,
-                'longitude' => 2.5823,
-                'product_reference' => 'product_9'
-            ],
-            [
-                'adress' => '10 Rue des Jardiniers, 60300 Senlis',
-                'latitude' => 49.2045,
-                'longitude' => 2.5900,
-                'product_reference' => 'product_10'
+                'product' => $this->getReference(ProductFixtures::REFERENCE_IDENTIFIER.'2', Product::class),
             ],
         ];
 
@@ -80,9 +38,7 @@ class LocationFixtures extends Fixture implements DependentFixtureInterface
             $location->setAdress($locationData['adress']);
             $location->setLatitude($locationData['latitude']);
             $location->setLongitude($locationData['longitude']);
-            
-            $product = $this->getReference($locationData['product_reference']);
-            $location->setProduct($product);
+            $location->setProduct($locationData['product']);
             
             $manager->persist($location);
         }
