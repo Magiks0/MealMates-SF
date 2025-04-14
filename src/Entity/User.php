@@ -42,9 +42,11 @@ class User implements \Symfony\Component\Security\Core\User\PasswordAuthenticate
     private Collection $availabilities;
 
     #[ORM\Column(length: 255)]
+    #[Groups('product:read')]
     private ?string $username = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups('product:read')]
     private ?string $adress = null;
 
     #[ORM\Column(length: 255, nullable: true)]

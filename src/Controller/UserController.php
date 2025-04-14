@@ -77,12 +77,10 @@ class UserController extends AbstractController
             return new JsonResponse(['message' => 'Invalid data format'], Response::HTTP_BAD_REQUEST);
         }
 
-        // Vider les préférences existantes
         foreach ($user->getDietaries() as $preference) {
             $user->removePreference($preference);
         }
 
-        // Ajouter les nouvelles préférences
         foreach ($data['preferences'] as $preferenceId) {
             $preference = $dietaryRepository->find($preferenceId);
             

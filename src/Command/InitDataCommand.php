@@ -17,7 +17,7 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 #[AsCommand(
     name: 'app:init-data',
-    description: 'Initialization of data with complete entity relationships',
+    description: 'Initialization of data',
 )]
 class InitDataCommand extends Command
 {
@@ -33,7 +33,7 @@ class InitDataCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $io->title('Importation des données réalistes avec relations complètes...');
 
-        // --- IMPORT PRODUCT TYPES ---
+        // --- IMPORT PRODUCT TYPES --- //
         $io->section('Importation des types de produits');
         $typeEntities = [];
         $types = [
@@ -52,7 +52,7 @@ class InitDataCommand extends Command
             $typeEntities[$typeName] = $type;
         }
 
-        // --- IMPORT DIETARIES ---
+        // --- IMPORT DIETARIES --- //
         $io->section('Importation des régimes alimentaires');
         $dietaryEntities = [];
         $dietaries = [
@@ -69,7 +69,7 @@ class InitDataCommand extends Command
             $dietaryEntities[$dietaryName] = $dietary;
         }
 
-        // --- IMPORT USERS ---
+        // --- IMPORT USERS --- //
         $io->section('Importation des utilisateurs');
         $users = [];
         $usersData = [
@@ -104,14 +104,12 @@ class InitDataCommand extends Command
             $users[] = $user;
         }
 
-        // --- IMPORT PRODUCTS ---
+        // --- IMPORT PRODUCTS --- //
         $io->section('Importation des produits & création des relations');
-        $products = [];
         $productsData = [
-            // UTILISATEUR 1: Lucas Dupas - Produits bio et donations
             [
                 'title' => 'Pommes Gala Bio',
-                'price' => 2.50, // 2.50€
+                'price' => 2.50,
                 'quantity' => 6,
                 'type' => 'Fruits',
                 'dietetic' => 'Bio',
@@ -125,7 +123,7 @@ class InitDataCommand extends Command
             ],
             [
                 'title' => 'Pain aux Céréales Sans Gluten',
-                'price' => 3.80, // 3.80€
+                'price' => 3.80,
                 'quantity' => 2,
                 'type' => 'Boulangerie & Pâtisserie',
                 'dietetic' => 'Sans gluten',
@@ -139,7 +137,7 @@ class InitDataCommand extends Command
             ],
             [
                 'title' => 'Lait d\'Amande Bio',
-                'price' => 3.20, // 3.20€
+                'price' => 3.20,
                 'quantity' => 3,
                 'type' => 'Boissons',
                 'dietetic' => 'Vegan',
@@ -151,11 +149,9 @@ class InitDataCommand extends Command
                 'collection' => '+12 days',
                 'donation' => true
             ],
-
-            // UTILISATEUR 2: Tom Zarb - Produits premium et viandes
             [
                 'title' => 'Steak Haché Charolais 5%',
-                'price' => 7.50, // 7.50€
+                'price' => 7.50,
                 'quantity' => 4,
                 'type' => 'Viandes',
                 'dietetic' => 'Riche en protéines',
@@ -169,7 +165,7 @@ class InitDataCommand extends Command
             ],
             [
                 'title' => 'Saumon Fumé d\'Écosse',
-                'price' => 10, // 9.95€
+                'price' => 10,
                 'quantity' => 2,
                 'type' => 'Poissons & Fruits de mer',
                 'dietetic' => 'Méditerranéen',
@@ -183,7 +179,7 @@ class InitDataCommand extends Command
             ],
             [
                 'title' => 'Riz Basmati Premium',
-                'price' => 4.20, // 4.20€
+                'price' => 4.20,
                 'quantity' => 3,
                 'type' => 'Épicerie salée',
                 'dietetic' => 'Sans allergènes',
@@ -195,11 +191,9 @@ class InitDataCommand extends Command
                 'collection' => '+170 days',
                 'donation' => false
             ],
-
-            // UTILISATEUR 3: Florian Sauvage - Produits locaux et artisanaux
             [
                 'title' => 'Miel de Lavande Artisanal',
-                'price' => 8.90, // 8.90€
+                'price' => 8.90,
                 'quantity' => 2,
                 'type' => 'Épicerie sucrée',
                 'dietetic' => 'Bio',
@@ -213,7 +207,7 @@ class InitDataCommand extends Command
             ],
             [
                 'title' => 'Fromage de Chèvre Fermier',
-                'price' => 6.50, // 6.50€
+                'price' => 6.50,
                 'quantity' => 3,
                 'type' => 'Produits laitiers',
                 'dietetic' => 'Méditerranéen',
@@ -227,7 +221,7 @@ class InitDataCommand extends Command
             ],
             [
                 'title' => 'Noix de Cajou Toastées Bio',
-                'price' => 5.70, // 5.70€
+                'price' => 5.70,
                 'quantity' => 4,
                 'type' => 'Snacking & Apéritifs',
                 'dietetic' => 'Riche en protéines',
@@ -241,7 +235,7 @@ class InitDataCommand extends Command
             ],
             [
                 'title' => 'Carottes Bio de Saison',
-                'price' => 1.90, // 1.90€
+                'price' => 1.90,
                 'quantity' => 8,
                 'type' => 'Légumes',
                 'dietetic' => 'Bio',
@@ -255,7 +249,7 @@ class InitDataCommand extends Command
             ],
             [
                 'title' => 'Yaourt Grec Nature',
-                'price' => 2.70, // 2.70€
+                'price' => 2.70,
                 'quantity' => 4,
                 'type' => 'Produits laitiers',
                 'dietetic' => 'Riche en protéines',
@@ -269,7 +263,7 @@ class InitDataCommand extends Command
             ],
             [
                 'title' => 'Chocolat Noir 85% Équitable',
-                'price' => 3.50, // 3.50€
+                'price' => 3.50,
                 'quantity' => 5,
                 'type' => 'Confiseries',
                 'dietetic' => 'Faible en sucres',
@@ -283,7 +277,7 @@ class InitDataCommand extends Command
             ],
             [
                 'title' => 'Huile d\'Olive Extra Vierge Bio',
-                'price' => 7, // 7.80€
+                'price' => 7,
                 'quantity' => 2,
                 'type' => 'Condiments & Assaisonnements',
                 'dietetic' => 'Bio',
@@ -297,7 +291,7 @@ class InitDataCommand extends Command
             ],
             [
                 'title' => 'Spaghetti Complets Bio',
-                'price' => 2.20, // 2.20€
+                'price' => 2.20,
                 'quantity' => 6,
                 'type' => 'Épicerie salée',
                 'dietetic' => 'Végétarien',
@@ -311,7 +305,7 @@ class InitDataCommand extends Command
             ],
             [
                 'title' => 'Quinoa Tricolore',
-                'price' => 4.30, // 4.30€
+                'price' => 4.30,
                 'quantity' => 3,
                 'type' => 'Céréales & Petit-déjeuner',
                 'dietetic' => 'Sans gluten',
@@ -325,43 +319,30 @@ class InitDataCommand extends Command
             ]
         ];
 
-        // Create products with all relationships
         foreach ($productsData as $productData) {
             $product = new Product();
-
-            // Basic product information
             $product->setTitle($productData['title']);
             $product->setPrice($productData['price']);
             $product->setQuantity($productData['quantity']);
             $product->setDescription($productData['description']);
-
-            // Realistic dates
             $createdAt = new \DateTime($productData['created_at']);
             $product->setCreatedAt($createdAt);
-            $product->setUpdatedAt($createdAt); // Même date pour création et mise à jour initiale
+            $product->setUpdatedAt($createdAt);
 
-            // Product specific dates
             $product->setPeremptionDate(new \DateTime($productData['peremption']));
             $product->setCollectionDate(new \DateTime($productData['collection']));
-
-            // Donation status
             $product->setDonation($productData['donation']);
-
-            // Link to User entity (ManyToOne)
             $product->setUser($users[$productData['user']]);
 
-            // Link to Type entity (ManyToOne)
             if (isset($typeEntities[$productData['type']])) {
                 $product->setType($typeEntities[$productData['type']]);
             }
 
-            // Link to Dietary entity (ManyToOne)
             if (isset($dieteticEntities[$productData['dietetic']])) {
                 $product->setDietetic($dieteticEntities[$productData['dietetic']]);
             }
 
             $this->entityManager->persist($product);
-            $products[] = $product;
         }
 
 

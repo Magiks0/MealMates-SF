@@ -57,4 +57,31 @@ class ProductRepository extends ServiceEntityRepository
 
         return $qb->getQuery()->getResult();
     }
+
+    public function findLastChanceProducts(): array
+    {
+        $now = new \DateTime();
+        $tomorrow = (clone $now)->modify('+1 day')->setTime(0, 0, 0);
+        $dayAfterTomorrow = (clone $now)->modify('+2 day')->setTime(23, 59, 59);
+
+        return $this->createQueryBuilder('p')
+            ->where('p.peremptionDate BETWEEN :start AND :end')
+            ->setParameter('start', $tomorrow)
+            ->setParameter('end', $dayAfterTomorrow)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function findRecentProducts(): array
+    {
+        $yesterdayStart = (new \DateTime())->modify('-1 day')->setTime(0, 0, 0);
+        $now = new \DateTime();
+
+        return $this->createQueryBuilder('p')
+            ->where('p.createdAt BETWEEN :start AND :end')
+            ->setParameter('start', $yesterdayStart)
+            ->setParameter('end', $now)
+            ->getQuery()
+            ->getResult();
+    }
 }
