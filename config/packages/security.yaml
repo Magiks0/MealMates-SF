@@ -9,14 +9,11 @@ security:
     App\Entity\User: "auto"
 
   firewalls:
-    dev:
-      pattern: ^/(_(profiler|wdt)|css|images|js)/
-      security: false
-
     main:
       pattern: ^/api
       stateless: true
       provider: app_user_provider
+      jwt: ~
       json_login:
         check_path: /api/login
         username_path: email
@@ -27,3 +24,7 @@ security:
     - { path: ^/api/login, roles: PUBLIC_ACCESS }
     - { path: ^/api/google-login, roles: PUBLIC_ACCESS }
     - { path: ^/api, roles: PUBLIC_ACCESS }
+    - { path: ^/api/users/me, roles: IS_AUTHENTICATED_FULLY }
+    - { path: ^/api/users/address, roles: IS_AUTHENTICATED_FULLY }
+    - { path: ^/api/users/image, roles: IS_AUTHENTICATED_FULLY }
+    - { path: ^/api/users/username, roles: IS_AUTHENTICATED_FULLY }
