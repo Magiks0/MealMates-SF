@@ -23,4 +23,31 @@ class ProductController extends AbstractController
 
         return new JsonResponse($jsonProducts, Response::HTTP_OK, [], true);
     }
+
+    #[Route('/product/last-chance', name: 'last_chance', methods: ['GET'])]
+    public function getLastChanceProducts(SerializerInterface $serializer, ProductRepository $productRepository): JsonResponse
+    {
+        $products = $productRepository->findLastChanceProducts();
+        $jsonProducts = $serializer->serialize($products, 'json', ['groups' => 'product:read']);
+
+        return new JsonResponse($jsonProducts, Response::HTTP_OK, [], true);
+    }
+
+//    #[Route('/product/recommendations', name: 'last_chance', methods: ['GET'])]
+//    public function getRecommendedProducts(SerializerInterface $serializer, ProductRepository $productRepository, Request $request): JsonResponse
+//    {
+//        $products = $productRepository->find();
+//        $jsonProducts = $serializer->serialize($products, 'json', ['groups' => 'product:read']);
+//
+//        return new JsonResponse($jsonProducts, Response::HTTP_OK, [], true);
+//    }
+
+    #[Route('/product/recent', name: 'recent_products', methods: ['GET'])]
+    public function getRecentProducts(SerializerInterface $serializer, ProductRepository $productRepository): JsonResponse
+    {
+        $products = $productRepository->findRecentProducts();
+        $jsonProducts = $serializer->serialize($products, 'json', ['groups' => 'product:read']);
+
+        return new JsonResponse($jsonProducts, Response::HTTP_OK, [], true);
+    }
 }
