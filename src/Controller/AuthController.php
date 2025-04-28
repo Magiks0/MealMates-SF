@@ -64,22 +64,21 @@ class AuthController extends AbstractController
         JWTTokenManagerInterface $JWTManager
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
-        $email = $data['email'] ?? null;
-        $plainPassword = $data['password'] ?? null;
+        $username = $data['username'] ?? null;
+        $password = $data['password'] ?? null;
 
-        $user = $userRepository->findOneBy(['email' => $email]);
+        $user = $userRepository->findOneBy(['username' => $username]);
 
-        if (!$user || !$passwordHasher->isPasswordValid($user, $plainPassword)) {
+        if (!$user || !$passwordHasher->isPasswordValid($user, $password)) {
             return new JsonResponse(['error' => 'Bad credentials'], 401);
         }
 
-        // Génération du token JWT pour l'utilisateur
-        $token = $JWTManager->create($user);
-
-        return new JsonResponse([
-            'message' => 'Logged in successfully',
-            'token' => $token,
-        ]);
+        try {
+            $token = $JWTManager->create($user);
+            return new JsonResponse(['token' => $token]);
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => 'Error generating JWT: ' . $e->getMessage()], 500);
+        }
     }
 
     #[Route('/api/google-login', name: 'app_google_login', methods: ['POST'])]

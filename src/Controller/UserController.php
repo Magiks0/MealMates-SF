@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\User;
 use App\Repository\DietaryRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -93,5 +94,23 @@ class UserController extends AbstractController
         $entityManager->flush();
 
         return new JsonResponse(['message' => 'Preferences updated successfully'], Response::HTTP_OK);
+    }
+
+    #[Route('/user/profile', name: 'api_user_profile', methods: ['GET'])]
+    public function getCurrentUser(): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        if (!$user) {
+            return new JsonResponse(['error' => 'User not authenticated'], 401);
+        }
+
+        return new JsonResponse([
+            'id' => $user->getId(),
+            'email' => $user->getEmail(),
+            'username' => $user->getUsername(),
+            'roles' => $user->getRoles()
+        ]);
     }
 }

@@ -55,7 +55,7 @@ class ProductRepository extends ServiceEntityRepository
                 ->setParameter('types', $typeIds);
         }
 
-        return $qb->getQuery()->getResult();
+        return $qb->orderBy('p.createdAt', 'DESC')->getQuery()->getResult();
     }
 
     public function findLastChanceProducts(): array
@@ -79,6 +79,7 @@ class ProductRepository extends ServiceEntityRepository
 
         return $this->createQueryBuilder('p')
             ->where('p.createdAt BETWEEN :start AND :end')
+            ->orderBy('p.createdAt', 'DESC')
             ->setParameter('start', $yesterdayStart)
             ->setParameter('end', $now)
             ->getQuery()

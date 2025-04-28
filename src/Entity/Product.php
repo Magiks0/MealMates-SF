@@ -68,6 +68,9 @@ class Product
     #[ORM\ManyToMany(targetEntity: Dietary::class, inversedBy: 'products')]
     private Collection $dietaries;
 
+    #[ORM\ManyToOne(inversedBy: 'products')]
+    private ?Address $address = null;
+
     public function __construct()
     {
         $this->files = new ArrayCollection();
@@ -237,6 +240,18 @@ class Product
     public function removeDietary(self $dietary): static
     {
         $this->dietaries->removeElement($dietary);
+
+        return $this;
+    }
+
+    public function getAddress(): ?Address
+    {
+        return $this->address;
+    }
+
+    public function setAddress(?Address $address): static
+    {
+        $this->address = $address;
 
         return $this;
     }
