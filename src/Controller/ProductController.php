@@ -2,8 +2,7 @@
 
 namespace App\Controller;
 
-use App\Entity\Dietary;
-use App\Entity\File;
+use App\Entity\Address;
 use App\Entity\Product;
 use App\Repository\ProductRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -17,7 +16,7 @@ use Symfony\Component\Serializer\SerializerInterface;
 #[Route('/api')]
 class ProductController extends AbstractController
 {
-    #[Route('/products', name: 'product', methods: ['GET'])]
+    #[Route('/products', name: 'api_product', methods: ['GET'])]
     public function getFilteredProducts(SerializerInterface $serializer, ProductRepository $productRepository, Request $request): JsonResponse
     {
         $filters = $request->query->all();
@@ -58,6 +57,7 @@ class ProductController extends AbstractController
     public function newProduct(Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
         try {
+            $user = $this->getUser();
             $title = $request->request->get('title');
             $description = $request->request->get('description');
             $quantity = (int)$request->request->get('quantity');
@@ -65,12 +65,22 @@ class ProductController extends AbstractController
             $price = (float)$request->request->get('price');
             $donation = filter_var($request->request->get('donation'), FILTER_VALIDATE_BOOLEAN);
 
+            $collection_date = new \DateTime();
+
             $product = (new Product())
                 ->setTitle($title)
-                ->setDescription($description);
-//                ->setQuantity($quantity)
-//                ->setPeremptionDate($peremptionDate)
-//                ->setDonation($donation);
+                ->setDescription($description)
+                ->setQuantity($quantity)
+                ->setPeremptionDate($peremptionDate)
+                ->setCollectionDate($collection_date)
+                ->setUser($user)
+                ->setDonation($donation);
+
+            if ($product->isDonation()) {
+                $product->setPrice(0);
+            } else {
+                $product->setPrice($price);
+            }
 //
 //            $files = $request->files->get('files');
 //            if ($files) {
@@ -89,13 +99,25 @@ class ProductController extends AbstractController
 //                    }
 //                }
 //            }
-//
+
+            $adress = new Address();
+            $adress
+                ->setName('9 rue de Janville, 60250 MOUY')
+                ->setLatitude('19.132414')
+                ->setLongitude('34.3454535');
+
+            $entityManager->persist($adress);
+
+            $product->setCreatedAt(new \DateTime());
+            $product->setUpdatedAt(new \DateTime());
+            $product->setAddress($adress);
+
             $entityManager->persist($product);
             $entityManager->flush();
 
             return new JsonResponse(['message' => 'Produit créé avec succès'], 201);
         } catch (\Exception $e) {
-            return new JsonResponse(['error' => 'Une erreur est survenue: ' . $e->getMessage()], 400);
+            return new JsonResponse(['error' => 'Une erreur est survenue: ' . $e->getMessage()]);
         }
     }
 }

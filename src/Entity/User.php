@@ -11,7 +11,7 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
-class User implements \Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface
+class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -218,5 +218,10 @@ class User implements \Symfony\Component\Security\Core\User\PasswordAuthenticate
         $this->dietaries->removeElement($dietary);
 
         return $this;
+    }
+
+    public function getUserIdentifier(): string
+    {
+        return $this->email;
     }
 }
