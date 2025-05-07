@@ -19,7 +19,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?int $id = null;
 
     #[ORM\Column(length: 180, unique: true)]
-    #[Groups('product:read')]
+    #[Groups('user:read')]
     private ?string $email = null;
 
     #[ORM\Column]
@@ -41,8 +41,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Availability::class, mappedBy: 'user_id', orphanRemoval: true)]
     private Collection $availabilities;
 
-    #[ORM\Column(length: 255)]
-    #[Groups('product:read')]
+    #[ORM\Column(length: 255, nullable: true)]
+    #[Groups('user:read')]
     private ?string $username = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -63,6 +63,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->availabilities = new ArrayCollection();
         $this->dietaries = new ArrayCollection();
     }
+
+    #[ORM\Column(length: 255, nullable: true)]
+    #[Groups('user:read')]
+    private ?string $location = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    #[Groups('user:read')]
+    private ?string $address = null;
 
     public function getId(): ?int
     {
@@ -223,5 +231,29 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getUserIdentifier(): string
     {
         return $this->email;
+    }
+
+    public function getLocation(): ?string
+    {
+        return $this->location;
+    }
+
+    public function setLocation(?string $location): static
+    {
+        $this->location = $location;
+
+        return $this;
+    }
+
+    public function getAddress(): ?string
+    {
+        return $this->address;
+    }
+
+    public function setAddress(?string $address): static
+    {
+        $this->address = $address;
+
+        return $this;
     }
 }

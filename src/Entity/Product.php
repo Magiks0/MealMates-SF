@@ -71,6 +71,9 @@ class Product
     #[ORM\ManyToOne(inversedBy: 'products')]
     private ?Address $address = null;
 
+    #[ORM\OneToOne(mappedBy: 'product', cascade: ['persist', 'remove'])]
+    private ?Location $location = null;
+
     public function __construct()
     {
         $this->files = new ArrayCollection();
@@ -252,6 +255,23 @@ class Product
     public function setAddress(?Address $address): static
     {
         $this->address = $address;
+
+        return $this;
+    }
+
+    public function getLocation(): ?Location
+    {
+        return $this->location;
+    }
+
+    public function setLocation(Location $location): static
+    {
+        // set the owning side of the relation if necessary
+        if ($location->getProduct() !== $this) {
+            $location->setProduct($this);
+        }
+
+        $this->location = $location;
 
         return $this;
     }
