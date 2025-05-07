@@ -72,9 +72,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups('user:read')]
     private ?string $address = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $image_URL = null;
-
     public function getId(): ?int
     {
         return $this->id;
@@ -256,18 +253,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setAddress(?string $address): static
     {
         $this->address = $address;
-
-        return $this;
-    }
-
-    public function getImageURL(): ?string
-    {
-        return $this->image_URL;
-    }
-
-    public function setImageURL(?string $image_URL): static
-    {
-        $this->image_URL = $image_URL;
 
         return $this;
     }
