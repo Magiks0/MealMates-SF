@@ -38,7 +38,7 @@ class Product
 
     #[ORM\Column]
     #[Groups('product:read')]
-    private ?int $price = null;
+    private ?float $price = null;
 
     #[ORM\Column]
     #[Groups('product:read')]
@@ -62,9 +62,14 @@ class Product
     #[Groups('product:read')]
     private ?Type $type = null;
 
+    /**
+     * @var Collection<int, Dietary>
+     */
+    #[ORM\ManyToMany(targetEntity: Dietary::class, inversedBy: 'products')]
+    private Collection $dietaries;
+
     #[ORM\ManyToOne(inversedBy: 'products')]
-    #[Groups('product:read')]
-    private ?Dietetic $dietetic = null;
+    private ?Address $address = null;
 
     #[ORM\OneToOne(mappedBy: 'product', cascade: ['persist', 'remove'])]
     private ?Location $location = null;
@@ -72,6 +77,7 @@ class Product
     public function __construct()
     {
         $this->files = new ArrayCollection();
+        $this->dietaries = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -127,12 +133,12 @@ class Product
         return $this;
     }
 
-    public function getPrice(): ?int
+    public function getPrice(): ?float
     {
         return $this->price;
     }
 
-    public function setPrice(int $price): static
+    public function setPrice(?float $price): static
     {
         $this->price = $price;
 
@@ -217,14 +223,38 @@ class Product
         return $this;
     }
 
-    public function getDietetic(): ?Dietetic
+    /**
+     * @return Collection<int, self>
+     */
+    public function getDietaries(): Collection
     {
-        return $this->dietetic;
+        return $this->dietaries;
     }
 
-    public function setDietetic(?Dietetic $dietetic): static
+    public function addDietary(self $dietary): static
     {
-        $this->dietetic = $dietetic;
+        if (!$this->dietaries->contains($dietary)) {
+            $this->dietaries->add($dietary);
+        }
+
+        return $this;
+    }
+
+    public function removeDietary(self $dietary): static
+    {
+        $this->dietaries->removeElement($dietary);
+
+        return $this;
+    }
+
+    public function getAddress(): ?Address
+    {
+        return $this->address;
+    }
+
+    public function setAddress(?Address $address): static
+    {
+        $this->address = $address;
 
         return $this;
     }

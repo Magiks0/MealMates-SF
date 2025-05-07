@@ -23,6 +23,7 @@ class AuthController extends AbstractController
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
 
+        $username = $data['username'];
         $email = $data['email'] ?? null;
         $plainPassword = $data['password'] ?? null;
 
@@ -37,45 +38,47 @@ class AuthController extends AbstractController
         }
 
         // Création du user
-        $user = new User();
-        $user->setEmail($email);
-        // Hachage du mot de passe
-        $hashedPassword = $passwordHasher->hashPassword($user, $plainPassword);
-        $user->setPassword($hashedPassword);
+        try {
+            $user = (new User())
+                ->setEmail($email)
+                ->setUsername($username)
+                ->setRoles(['ROLE_USER']);
 
-        // ex: isVerified = false par défaut
-        // $user->setIsVerified(false);
+            $hashedPassword = $passwordHasher->hashPassword($user, $plainPassword);
+            $user->setPassword($hashedPassword);
+            $em->persist($user);
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => $e->getMessage()], 400);
+        }
 
-        // Sauvegarde
-        $em->persist($user);
         $em->flush();
 
         return new JsonResponse(['message' => 'User created'], 201);
     }
 
-    #[Route('/api/login', name: 'app_login', methods: ['POST'])]
+    #[Route('/api/login', name: 'app_login', methods: ['GET','POST'])]
     public function login(
         Request $request,
-        UserRepository $userRepo,
+        UserRepository $userRepository,
         UserPasswordHasherInterface $passwordHasher,
         JWTTokenManagerInterface $JWTManager
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
-        $email = $data['email'] ?? null;
-        $plainPassword = $data['password'] ?? null;
+        $username = $data['username'] ?? null;
+        $password = $data['password'] ?? null;
 
-        $user = $userRepo->findOneBy(['email' => $email]);
-        if (!$user || !$passwordHasher->isPasswordValid($user, $plainPassword)) {
+        $user = $userRepository->findOneBy(['username' => $username]);
+
+        if (!$user || !$passwordHasher->isPasswordValid($user, $password)) {
             return new JsonResponse(['error' => 'Bad credentials'], 401);
         }
 
-        // Génération du token JWT pour l'utilisateur
-        $token = $JWTManager->create($user);
-
-        return new JsonResponse([
-            'message' => 'Logged in successfully',
-            'token' => $token,
-        ]);
+        try {
+            $token = $JWTManager->create($user);
+            return new JsonResponse(['token' => $token]);
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => 'Error generating JWT: ' . $e->getMessage()], 500);
+        }
     }
 
     #[Route('/api/google-login', name: 'app_google_login', methods: ['POST'])]

@@ -2,14 +2,13 @@
 
 namespace App\Entity;
 
-use App\Repository\DieteticRepository;
+use App\Repository\AddressRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Serializer\Attribute\Groups;
 
-#[ORM\Entity(repositoryClass: DieteticRepository::class)]
-class Dietetic
+#[ORM\Entity(repositoryClass: AddressRepository::class)]
+class Address
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -17,13 +16,18 @@ class Dietetic
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['product:read', 'dietetic:read'])]
     private ?string $name = null;
+
+    #[ORM\Column]
+    private ?float $latitude = null;
+
+    #[ORM\Column]
+    private ?float $longitude = null;
 
     /**
      * @var Collection<int, Product>
      */
-    #[ORM\OneToMany(targetEntity: Product::class, mappedBy: 'dietetic')]
+    #[ORM\OneToMany(targetEntity: Product::class, mappedBy: 'address')]
     private Collection $products;
 
     public function __construct()
@@ -48,6 +52,30 @@ class Dietetic
         return $this;
     }
 
+    public function getLatitude(): ?float
+    {
+        return $this->latitude;
+    }
+
+    public function setLatitude(float $latitude): static
+    {
+        $this->latitude = $latitude;
+
+        return $this;
+    }
+
+    public function getLongitude(): ?float
+    {
+        return $this->longitude;
+    }
+
+    public function setLongitude(float $longitude): static
+    {
+        $this->longitude = $longitude;
+
+        return $this;
+    }
+
     /**
      * @return Collection<int, Product>
      */
@@ -60,7 +88,7 @@ class Dietetic
     {
         if (!$this->products->contains($product)) {
             $this->products->add($product);
-            $product->setDietetic($this);
+            $product->setAddress($this);
         }
 
         return $this;
@@ -70,8 +98,8 @@ class Dietetic
     {
         if ($this->products->removeElement($product)) {
             // set the owning side to null (unless already changed)
-            if ($product->getDietetic() === $this) {
-                $product->setDietetic(null);
+            if ($product->getAddress() === $this) {
+                $product->setAddress(null);
             }
         }
 

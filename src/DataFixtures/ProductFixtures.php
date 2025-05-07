@@ -8,7 +8,7 @@ use Doctrine\Persistence\ObjectManager;
 use App\Entity\Product;
 use App\Entity\User;
 use App\Entity\Type;
-use App\Entity\Dietetic;
+use App\Entity\Dietary;
 use DateTime;
 
 class ProductFixtures extends Fixture implements DependentFixtureInterface
@@ -28,7 +28,7 @@ class ProductFixtures extends Fixture implements DependentFixtureInterface
                 'collectionDate' => new DateTime('+2 days'),
                 'user' => $this->getReference(UserFixtures::REFERENCE_IDENTIFIER.'1', User::class),
                 'type' => $this->getReference(TypeFixtures::REFERENCE_IDENTIFIER.'1', Type::class),
-                'dietetic' => $this->getReference(DieteticFixtures::REFERENCE_IDENTIFIER.'0', Dietetic::class),
+                'dietetic' => $this->getReference(DietaryFixtures::REFERENCE_IDENTIFIER.'0', Dietary::class),
             ],
             [
                 'title' => 'Riz Complet',
@@ -40,7 +40,7 @@ class ProductFixtures extends Fixture implements DependentFixtureInterface
                 'collectionDate' => new DateTime('+3 days'),
                 'user' => $this->getReference(UserFixtures::REFERENCE_IDENTIFIER.'0', User::class),
                 'type' => $this->getReference(TypeFixtures::REFERENCE_IDENTIFIER.'5', Type::class),
-                'dietetic' => $this->getReference(DieteticFixtures::REFERENCE_IDENTIFIER.'0', Dietetic::class),
+                'dietetic' => $this->getReference(DietaryFixtures::REFERENCE_IDENTIFIER.'0', Dietary::class),
             ],
             [
                 'title' => 'Fromage de Chèvre',
@@ -52,7 +52,7 @@ class ProductFixtures extends Fixture implements DependentFixtureInterface
                 'collectionDate' => new DateTime('+4 days'),
                 'user' => $this->getReference(UserFixtures::REFERENCE_IDENTIFIER.'2', User::class),
                 'type' => $this->getReference(TypeFixtures::REFERENCE_IDENTIFIER.'4',Type::class),
-                'dietetic' => $this->getReference(DieteticFixtures::REFERENCE_IDENTIFIER.'7', Dietetic::class),
+                'dietetic' => $this->getReference(DietaryFixtures::REFERENCE_IDENTIFIER.'7', Dietary::class),
             ]
         ];
 
@@ -83,7 +83,7 @@ class ProductFixtures extends Fixture implements DependentFixtureInterface
         return [
             UserFixtures::class,
             TypeFixtures::class,
-            DieteticFixtures::class,
+            DietaryFixtures::class,
         ];
     }
 }
