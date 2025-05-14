@@ -56,6 +56,7 @@ class Product
      * @var Collection<int, File>
      */
     #[ORM\OneToMany(targetEntity: File::class, mappedBy: 'product')]
+    #[Groups('product:read')]
     private Collection $files;
 
     #[ORM\ManyToOne(inversedBy: 'products')]
