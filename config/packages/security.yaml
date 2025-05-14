@@ -6,7 +6,7 @@ security:
         property: username
 
   password_hashers:
-    App\Entity\User: 'auto'
+    App\Entity\User: "auto"
 
   firewalls:
     dev:

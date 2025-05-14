@@ -95,6 +95,7 @@ class InitDataCommand extends Command
 
         foreach ($usersData as $userData) {
             $user = new User();
+            $user->setUsername($userData['username']);
             $user->setEmail($userData['email']);
             $hashedPassword = $this->passwordHasher->hashPassword($user, $userData['password']);
             $user->setPassword($hashedPassword);

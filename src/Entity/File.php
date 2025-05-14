@@ -68,6 +68,7 @@ class File
     public function setPath(string $path): static
     {
         $this->path = $path;
+        return $this;
     }
 
     public function getProduct(): ?Product
