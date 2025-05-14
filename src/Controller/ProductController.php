@@ -3,10 +3,12 @@
 namespace App\Controller;
 
 use App\Entity\Address;
+use App\Entity\File;
 use App\Entity\Product;
 use App\Repository\ProductRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -54,7 +56,7 @@ class ProductController extends AbstractController
     }
 
     #[Route('/product/new', name: 'product', methods: ['POST'])]
-    public function newProduct(Request $request, EntityManagerInterface $entityManager): JsonResponse
+    public function newProduct(Request $request, EntityManagerInterface $entityManager, Filesystem $filesystem): JsonResponse
     {
         try {
             $user = $this->getUser();
@@ -81,24 +83,43 @@ class ProductController extends AbstractController
             } else {
                 $product->setPrice($price);
             }
-//
-//            $files = $request->files->get('files');
-//            if ($files) {
-//                foreach ($files as $file) {
-//                    if ($file->isValid()) {
-//                        $fileName = md5(uniqid()).'.'.$file->guessExtension();
-//
-//                        $file->move(
-//                            $this->getParameter('products_images_directory'),
-//                            $fileName
-//                        );
-//
-//                        $productImage = new File();
-//                        $productImage->setPath($fileName);
-//                        $product->addFile($productImage);
-//                    }
-//                }
-//            }
+
+            $files = $request->files->get('files');
+            if ($files) {
+                foreach ($files as $file) {
+                    try {
+                        $originalName = $file->getClientOriginalName();
+                        $size = (string) $file->getSize();
+                        $fileName = md5(uniqid()).'.'.$file->guessExtension();
+                        $filePath = $this->getParameter('products_images_directory');
+
+                        if(!$filesystem->exists($filePath)) {
+                            $filesystem->mkdir($filePath);
+                        }
+
+                        $file->move(
+                            $filePath,
+                            $fileName
+                        );
+
+                        $productImage = new File();
+
+                        $productImage
+                            ->setOriginalName($originalName)
+                            ->setSize($size)
+                            ->setPath($fileName)
+                            ->setCreatedAt(new \DateTime());
+                        $productImage->setUpdatedAt(new \DateTime());
+                        $product->addFile($productImage);
+                        $entityManager->persist($productImage);
+                    } catch(\Exception $e) {
+                        return new JsonResponse([
+                            'error' => $e->getMessage(),
+                            'trace' => $e->getTraceAsString()
+                        ], 500);
+                    }
+                }
+            }
 
             $adress = new Address();
             $adress
