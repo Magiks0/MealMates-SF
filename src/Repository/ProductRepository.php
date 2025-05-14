@@ -15,6 +15,36 @@ class ProductRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Product::class);
     }
+     public function findByDistance(float $latitude, float $longitude, float $radius = 10): array
+    {
+        $earthRadius = 6371;
+        
+        $dql = "
+            SELECT p
+            FROM App\Entity\Product p
+            JOIN p.address a
+            WHERE (
+                :radius >= (:earthRadius * acos(
+                    cos(radians(:latitude)) * 
+                    cos(radians(a.latitude)) * 
+                    cos(radians(a.longitude) - radians(:longitude)) + 
+                    sin(radians(:latitude)) * 
+                    sin(radians(a.latitude))
+                ))
+            )
+            ORDER BY p.createdAt DESC
+        ";
+        
+        $query = $this->getEntityManager()->createQuery($dql);
+        $query->setParameters([
+            'latitude' => $latitude,
+            'longitude' => $longitude,
+            'radius' => $radius,
+            'earthRadius' => $earthRadius,
+        ]);
+        
+        return $query->getResult();
+    }
 
     public function findFilteredProducts(array $filters)
     {
@@ -52,6 +82,15 @@ class ProductRepository extends ServiceEntityRepository
                 ->andWhere('t.id IN (:types)')
                 ->setParameter('types', $typeIds);
         }
+
+        if (!empty($filters['addresses'])) {
+            $adressIds = explode(',', $filters['addresses']);
+            $qb
+                ->innerJoin('p.address', 't')
+                ->andWhere('t.id IN (:addresses)')
+                ->setParameter('addresses', $adressIds);
+        }
+
 
         return $qb->orderBy('p.createdAt', 'DESC')->getQuery()->getResult();
     }

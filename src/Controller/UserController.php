@@ -2,115 +2,107 @@
 
 namespace App\Controller;
 
-use App\Entity\User;
-use App\Repository\DietaryRepository;
 use App\Repository\UserRepository;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\SerializerInterface;
-use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
+use Symfony\Component\HttpFoundation\Request;
+use Doctrine\ORM\EntityManagerInterface;
 
 #[Route('/api')]
 class UserController extends AbstractController
 {
     #[Route('/users', name: 'users', methods: ['GET'])]
-    public function getUsers(UserRepository $userRepository, SerializerInterface $serializer): JsonResponse
+    public function getAllUsers(UserRepository $userRepository, SerializerInterface $serializer): JsonResponse
     {
         $users = $userRepository->findAll();
-        $jsonUsers = $serializer->serialize($users, 'json');
-
+        $jsonUsers = $serializer->serialize($users, 'json', ['groups' => 'user:read']);
+        
         return new JsonResponse($jsonUsers, Response::HTTP_OK, [], true);
     }
+    
+    #[Route('/users/me', name: 'current_user', methods: ['GET'])]
+    public function getCurrentUser(SerializerInterface $serializer): JsonResponse
+    {
+        $currentUser = $this->getUser();
+        
+        if (!$currentUser) {
+            return new JsonResponse(['message' => 'Utilisateur non connecté'], Response::HTTP_UNAUTHORIZED);
+        }
+        
+        $jsonUser = $serializer->serialize($currentUser, 'json', ['groups' => 'user:read']);
+        
+        return new JsonResponse($jsonUser, Response::HTTP_OK, [], true);
+    }
 
-    #[Route('/users/update/{id}', name: 'update_user', methods: ['PUT'])]
-    public function updateUser(
-        int $id,
-        Request $request,
-        UserRepository $userRepository,
-        EntityManagerInterface $entityManager,
-        SerializerInterface $serializer
-    ): JsonResponse {
-        $user = $userRepository->find($id);
+    #[Route('/users/address', name: 'set_user_address', methods: ['PATCH'])]
+    public function setAddress(Request $request, EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse {
+        $user = $this->getUser();
+    
+        if (!$user) {
+            return new JsonResponse(['message' => 'Utilisateur non connecté'], Response::HTTP_UNAUTHORIZED);
+        }
+    
+        $data = json_decode($request->getContent(), true);
+    
+        if (!isset($data['address']) || empty($data['address'])) {
+            return new JsonResponse(['message' => 'Adresse manquante'], Response::HTTP_BAD_REQUEST);
+        }
+    
+        $user->setAddress($data['address']);
+        $em->persist($user);
+        $em->flush();
+    
+        $jsonUser = $serializer->serialize($user, 'json', ['groups' => 'user:read']);
+    
+        return new JsonResponse($jsonUser, Response::HTTP_OK, [], true);
+    }
+
+    #[Route('/users/username', name: 'set_user_username', methods: ['PATCH'])]
+    public function setUsername(Request $request, EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse {
+        $user = $this->getUser();
 
         if (!$user) {
-            return new JsonResponse(['message' => 'Utilisateur non trouvé'], Response::HTTP_NOT_FOUND);
+            return new JsonResponse(['message' => 'Utilisateur non connecté'], Response::HTTP_UNAUTHORIZED);
         }
 
         $data = json_decode($request->getContent(), true);
 
-        if (isset($data['username'])) {
-            $user->setUsername($data['username']);
-        }
-        if (isset($data['adress'])) {
-            $user->setAdress($data['adress']);
-        }
-        if (isset($data['image_url'])) {
-            $user->setImageUrl($data['image_url']);
+        if (!isset($data['username']) || empty($data['username'])) {
+            return new JsonResponse(['message' => 'Nom d\'utilisateur manquant'], Response::HTTP_BAD_REQUEST);
         }
 
-        $entityManager->persist($user);
-        $entityManager->flush();
+        $user->setUsername($data['username']);
+        $em->persist($user);
+        $em->flush();
 
-        $jsonUser = $serializer->serialize($user, 'json', [AbstractNormalizer::IGNORED_ATTRIBUTES => ['password']]);
+        $jsonUser = $serializer->serialize($user, 'json', ['groups' => 'user:read']);
 
         return new JsonResponse($jsonUser, Response::HTTP_OK, [], true);
     }
 
-    #[Route('/users/preferences', name: 'update_user_preferences', methods: ['PUT'])]
-    public function updatePreferences(
-        Request $request,
-        EntityManagerInterface $entityManager,
-        DietaryRepository $dietaryRepository,
-    ): JsonResponse {
+    #[Route('/users/image', name: 'set_user_image', methods: ['PATCH'])]
+    public function setImageUrl( Request $request, EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse {
         $user = $this->getUser();
-        
+
         if (!$user) {
-            return new JsonResponse(['message' => 'User not authenticated'], Response::HTTP_UNAUTHORIZED);
+            return new JsonResponse(['message' => 'Utilisateur non connecté'], Response::HTTP_UNAUTHORIZED);
         }
 
         $data = json_decode($request->getContent(), true);
-        
-        if (!isset($data['preferences']) || !is_array($data['preferences'])) {
-            return new JsonResponse(['message' => 'Invalid data format'], Response::HTTP_BAD_REQUEST);
+
+        if (!isset($data['image_url']) || empty($data['image_url'])) {
+            return new JsonResponse(['message' => 'URL de l\'image manquante'], Response::HTTP_BAD_REQUEST);
         }
 
-        foreach ($user->getDietaries() as $preference) {
-            $user->removePreference($preference);
-        }
+        $user->setImageUrl($data['image_url']);
+        $em->persist($user);
+        $em->flush();
 
-        foreach ($data['preferences'] as $preferenceId) {
-            $preference = $dietaryRepository->find($preferenceId);
-            
-            if ($preference) {
-                $user->addDietary($preference);
-            }
-        }
+        $jsonUser = $serializer->serialize($user, 'json', ['groups' => 'user:read']);
 
-        $entityManager->persist($user);
-        $entityManager->flush();
-
-        return new JsonResponse(['message' => 'Preferences updated successfully'], Response::HTTP_OK);
-    }
-
-    #[Route('/user/profile', name: 'api_user_profile', methods: ['GET'])]
-    public function getCurrentUser(): JsonResponse
-    {
-        /** @var User $user */
-        $user = $this->getUser();
-
-        if (!$user) {
-            return new JsonResponse(['error' => 'User not authenticated'], 401);
-        }
-
-        return new JsonResponse([
-            'id' => $user->getId(),
-            'email' => $user->getEmail(),
-            'username' => $user->getUsername(),
-            'roles' => $user->getRoles()
-        ]);
+        return new JsonResponse($jsonUser, Response::HTTP_OK, [], true);
     }
 }
