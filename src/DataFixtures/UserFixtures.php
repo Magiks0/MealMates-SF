@@ -41,7 +41,7 @@ class UserFixtures extends Fixture implements DependentFixtureInterface
     public function getDependencies(): array
     {
         return [
-            PreferencesFixtures::class,
+            DietaryFixtures::class,
         ];
     }
 }

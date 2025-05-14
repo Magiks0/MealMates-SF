@@ -58,10 +58,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\ManyToMany(targetEntity: Dietary::class, inversedBy: 'users')]
     private Collection $dietaries;
 
+    /**
+     * @var Collection<int, SavedSearch>
+     */
+    #[ORM\OneToMany(targetEntity: SavedSearch::class, mappedBy: 'owner', orphanRemoval: true)]
+    private Collection $savedSearches;
+
     public function __construct()
     {
         $this->availabilities = new ArrayCollection();
         $this->dietaries = new ArrayCollection();
+        $this->savedSearches = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -223,5 +230,35 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getUserIdentifier(): string
     {
         return $this->email;
+    }
+
+    /**
+     * @return Collection<int, SavedSearch>
+     */
+    public function getSavedSearches(): Collection
+    {
+        return $this->savedSearches;
+    }
+
+    public function addSavedSearch(SavedSearch $savedSearch): static
+    {
+        if (!$this->savedSearches->contains($savedSearch)) {
+            $this->savedSearches->add($savedSearch);
+            $savedSearch->setOwner($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSavedSearch(SavedSearch $savedSearch): static
+    {
+        if ($this->savedSearches->removeElement($savedSearch)) {
+            // set the owning side to null (unless already changed)
+            if ($savedSearch->getOwner() === $this) {
+                $savedSearch->setOwner(null);
+            }
+        }
+
+        return $this;
     }
 }
