@@ -26,26 +26,30 @@ class ProductRepository extends ServiceEntityRepository
             $qb
                 ->andWhere('p.price >= :minPrice')
                 ->setParameter('minPrice', $filters['minPrice']);
-        };
+        }
+        ;
 
         if (!empty($filters['maxPrice'])) {
             $qb
                 ->andWhere('p.price <= :maxPrice')
                 ->setParameter('maxPrice', $filters['maxPrice']);
-        };
+        }
+        ;
 
         if (!empty($filters['dietetic'])) {
             $qb
                 ->join('p.dietetic', 'd')
                 ->andWhere('d.name = :dietetic')
                 ->setParameter('dietetic', $filters['dietetic']);
-        };
+        }
+        ;
 
         if (!empty($filters['peremptionDate'])) {
             $qb
                 ->andWhere('p.peremptionDate >= :peremptionDate')
                 ->setParameter('peremptionDate', $filters['peremptionDate']);
-        };
+        }
+        ;
 
         if (!empty($filters['types'])) {
             $typeIds = explode(',', $filters['types']);
@@ -84,5 +88,14 @@ class ProductRepository extends ServiceEntityRepository
             ->setParameter('end', $now)
             ->getQuery()
             ->getResult();
+    }
+
+    public function findExpiringBefore(\DateTimeImmutable $limit): array
+    {
+        $qb = $this->createQueryBuilder('p')
+            ->andWhere('p.peremptionDate <= :d')
+            ->setParameter('d', $limit);
+
+        return $qb->getQuery()->getResult();
     }
 }
