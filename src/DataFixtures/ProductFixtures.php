@@ -67,7 +67,7 @@ class ProductFixtures extends Fixture implements DependentFixtureInterface
             $product->setCollectionDate($productData['collectionDate']);
             $product->setUser($productData['user']);
             $product->setType($productData['type']);
-            $product->setDietetic($productData['dietetic']);
+            $product->addDietary($productData['dietetic']);
             $product->setCreatedAt(new DateTime());
             $product->setUpdatedAt(new DateTime());
             $manager->persist($product);

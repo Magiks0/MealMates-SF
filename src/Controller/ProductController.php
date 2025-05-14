@@ -17,12 +17,38 @@ use Symfony\Component\Serializer\SerializerInterface;
 class ProductController extends AbstractController
 {
     #[Route('/products', name: 'api_product', methods: ['GET'])]
-    public function getFilteredProducts(SerializerInterface $serializer, ProductRepository $productRepository, Request $request): JsonResponse
+    public function getAllProducts(SerializerInterface $serializer, ProductRepository $productRepository, Request $request): JsonResponse
     {
-        $filters = $request->query->all();
-        $products = $productRepository->findFilteredProducts($filters);
+        $products = $productRepository->findAll();
         $jsonProducts = $serializer->serialize($products, 'json', ['groups' => 'product:read']);
 
+        return new JsonResponse($jsonProducts, Response::HTTP_OK, [], true);
+    }
+
+    #[Route('/products/search', name: 'api_product_search', methods: ['GET'])]
+    public function searchProducts(SerializerInterface $serializer, ProductRepository $productRepository, Request $request): JsonResponse
+    {
+        // Récupérer les paramètres de recherche
+        $latitude = $request->query->get('latitude');
+        $longitude = $request->query->get('longitude');
+        $radius = $request->query->get('radius', 10); // Rayon par défaut: 10km
+        
+        // Vérifier que les coordonnées sont fournies
+        if (!$latitude || !$longitude) {
+            return new JsonResponse(['error' => 'Les coordonnées (latitude et longitude) sont requises'], Response::HTTP_BAD_REQUEST);
+        }
+        
+        // Convertir en valeurs numériques
+        $latitude = (float) $latitude;
+        $longitude = (float) $longitude;
+        $radius = (float) $radius;
+        
+        // Rechercher les produits dans le rayon spécifié
+        $products = $productRepository->findByDistance($latitude, $longitude, $radius);
+        
+        // Sérialiser les résultats
+        $jsonProducts = $serializer->serialize($products, 'json', ['groups' => 'product:read']);
+        
         return new JsonResponse($jsonProducts, Response::HTTP_OK, [], true);
     }
 

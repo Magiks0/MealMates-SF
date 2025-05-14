@@ -45,9 +45,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups('user:read')]
     private ?string $username = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    #[Groups('product:read')]
-    private ?string $adress = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $image_url = null;
@@ -63,10 +60,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->availabilities = new ArrayCollection();
         $this->dietaries = new ArrayCollection();
     }
-
-    #[ORM\Column(length: 255, nullable: true)]
-    #[Groups('user:read')]
-    private ?string $location = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     #[Groups('user:read')]
@@ -169,18 +162,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getAdress(): ?string
-    {
-        return $this->adress;
-    }
-
-    public function setAdress(?string $adress): static
-    {
-        $this->adress = $adress;
-
-        return $this;
-    }
-
     public function getImageUrl(): ?string
     {
         return $this->image_url;
@@ -231,18 +212,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getUserIdentifier(): string
     {
         return $this->email;
-    }
-
-    public function getLocation(): ?string
-    {
-        return $this->location;
-    }
-
-    public function setLocation(?string $location): static
-    {
-        $this->location = $location;
-
-        return $this;
     }
 
     public function getAddress(): ?string

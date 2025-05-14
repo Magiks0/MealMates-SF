@@ -19,10 +19,42 @@ class UserFixtures extends Fixture implements DependentFixtureInterface
     public function load(ObjectManager $manager): void
     {
         $users = [
-            ['email' => 'user1@example.com', 'password' => 'xxx', 'isVerified' => true, 'location' => '[49.21057328867782, 2.581954706737226]'],
-            ['email' => 'user2@example.com', 'password' => 'xxx', 'isVerified' => false, 'location' => '[49.21057328867782, 2.581954706737226]'],
-            ['email' => 'user3@example.com', 'password' => 'xxx', 'isVerified' => true, 'location' => '[49.21057328867782, 2.581954706737226]'],
-            ['email' => 'user4@example.com', 'password' => 'xxx', 'isVerified' => false, 'location' => '[49.21057328867782, 2.581954706737226]']
+            [
+            'email' => 'user1@example.com',
+            'password' => 'xxx',
+            'isVerified' => true,
+            'address' => '10 Rue de Paris, Senlis',
+            'imageUrl' => 'https://example.com/images/user1.jpg',
+            'note' => random_int(2, 5),
+            'username' => 'user1'
+            ],
+            [
+            'email' => 'user2@example.com',
+            'password' => 'xxx',
+            'isVerified' => false,
+            'address' => '15 Rue de la République, Senlis',
+            'imageUrl' => 'https://example.com/images/user2.jpg',
+            'note' => random_int(2, 5),
+            'username' => 'user2'
+            ],
+            [
+            'email' => 'user3@example.com',
+            'password' => 'xxx',
+            'isVerified' => true,
+            'address' => '20 Avenue des Jardins, Senlis',
+            'imageUrl' => 'https://example.com/images/user3.jpg',
+            'note' => random_int(2, 5),
+            'username' => 'user3'
+            ],
+            [
+            'email' => 'user4@example.com',
+            'password' => 'xxx',
+            'isVerified' => false,
+            'address' => '5 Place de l’Église, Senlis',
+            'imageUrl' => 'https://example.com/images/user4.jpg',
+            'note' => random_int(2, 5),
+            'username' => 'user4'
+            ]
         ];
 
         foreach ($users as $i => $userData) {
@@ -30,8 +62,10 @@ class UserFixtures extends Fixture implements DependentFixtureInterface
             $user->setEmail($userData['email']);
             $user->setPassword($userData['password']);
             $user->setIsVerified($userData['isVerified']);
-            $user->setLocation($userData['location']);
-            $user->setNote(random_int(2,5));
+            $user->setAddress($userData['address']);
+            $user->setImageUrl($userData['imageUrl']);
+            $user->setNote($userData['note']);
+            $user->setUsername($userData['username']);
             $manager->persist($user);
             $this->addReference(self::REFERENCE_IDENTIFIER.$i, $user);
         }
@@ -42,7 +76,7 @@ class UserFixtures extends Fixture implements DependentFixtureInterface
     public function getDependencies(): array
     {
         return [
-            PreferencesFixtures::class,
+            DietaryFixtures::class,
         ];
     }
 }
