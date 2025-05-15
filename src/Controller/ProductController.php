@@ -20,7 +20,33 @@ class ProductController extends AbstractController
     public function getFilteredProducts(SerializerInterface $serializer, ProductRepository $productRepository, Request $request): JsonResponse
     {
         $filters = $request->query->all();
+        
+        // Traiter les paramètres géographiques
+        if ($request->query->has('latitude') && $request->query->has('longitude')) {
+            $filters['latitude'] = (float) $request->query->get('latitude');
+            $filters['longitude'] = (float) $request->query->get('longitude');
+            $filters['radius'] = (float) $request->query->get('radius', 10); // Rayon par défaut de 10 km
+        }
+        
         $products = $productRepository->findFilteredProducts($filters);
+        $jsonProducts = $serializer->serialize($products, 'json', ['groups' => 'product:read']);
+
+        return new JsonResponse($jsonProducts, Response::HTTP_OK, [], true);
+    }
+
+    #[Route('/products/nearby', name: 'api_products_nearby', methods: ['GET'])]
+    public function getNearbyProducts(SerializerInterface $serializer, ProductRepository $productRepository, Request $request): JsonResponse
+    {
+        // Vérifier la présence des paramètres requis
+        if (!$request->query->has('latitude') || !$request->query->has('longitude')) {
+            return new JsonResponse(['error' => 'Les paramètres latitude et longitude sont requis'], Response::HTTP_BAD_REQUEST);
+        }
+        
+        $latitude = (float) $request->query->get('latitude');
+        $longitude = (float) $request->query->get('longitude');
+        $radius = (float) $request->query->get('radius', 10); // Rayon par défaut de 10 km
+        
+        $products = $productRepository->findProductsNearby($latitude, $longitude, $radius);
         $jsonProducts = $serializer->serialize($products, 'json', ['groups' => 'product:read']);
 
         return new JsonResponse($jsonProducts, Response::HTTP_OK, [], true);
@@ -29,7 +55,7 @@ class ProductController extends AbstractController
     #[Route('/product/{id}', name: 'api_product_show', methods: ['GET'])]
     public function getProduct(int $id, SerializerInterface $serializer, ProductRepository $productRepository): JsonResponse
     {
-        $product = $productRepository->findDetailedProduct($id);
+        $product = $productRepository->find($id);
         
         if (!$product) {
             return new JsonResponse(['message' => 'Produit non trouvé'], Response::HTTP_NOT_FOUND);
@@ -95,24 +121,24 @@ class ProductController extends AbstractController
             } else {
                 $product->setPrice($price);
             }
-
-           $files = $request->files->get('files');
-           if ($files) {
-               foreach ($files as $file) {
-                   if ($file->isValid()) {
-                       $fileName = md5(uniqid()).'.'.$file->guessExtension();
-
-                       $file->move(
-                           $this->getParameter('products_images_directory'),
-                           $fileName
-                       );
-
-                       $productImage = new File();
-                       $productImage->setPath($fileName);
-                       $product->addFile($productImage);
-                   }
-               }
-           }
+//
+//            $files = $request->files->get('files');
+//            if ($files) {
+//                foreach ($files as $file) {
+//                    if ($file->isValid()) {
+//                        $fileName = md5(uniqid()).'.'.$file->guessExtension();
+//
+//                        $file->move(
+//                            $this->getParameter('products_images_directory'),
+//                            $fileName
+//                        );
+//
+//                        $productImage = new File();
+//                        $productImage->setPath($fileName);
+//                        $product->addFile($productImage);
+//                    }
+//                }
+//            }
 
             $adress = new Address();
             $adress
