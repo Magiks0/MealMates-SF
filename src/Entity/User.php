@@ -16,10 +16,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups('product:read')]
     private ?int $id = null;
 
     #[ORM\Column(length: 180, unique: true)]
-    #[Groups('user:read')]
+    #[Groups('product:read')]
     private ?string $email = null;
 
     #[ORM\Column]
@@ -41,12 +42,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Availability::class, mappedBy: 'user_id', orphanRemoval: true)]
     private Collection $availabilities;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    #[Groups('user:read')]
+    #[ORM\Column(length: 255)]
+    #[Groups('product:read')]
     private ?string $username = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    #[Groups('product:read')]
+    private ?string $address = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups('product:read')]
     private ?string $image_url = null;
 
     /**
@@ -55,15 +60,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\ManyToMany(targetEntity: Dietary::class, inversedBy: 'users')]
     private Collection $dietaries;
 
+    /**
+     * @var Collection<int, Product>
+     */
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Product::class)]
+    private Collection $products;
+
     public function __construct()
     {
         $this->availabilities = new ArrayCollection();
         $this->dietaries = new ArrayCollection();
+        $this->products = new ArrayCollection();
     }
-
-    #[ORM\Column(length: 255, nullable: true)]
-    #[Groups('user:read')]
-    private ?string $address = null;
 
     public function getId(): ?int
     {
@@ -162,6 +170,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    public function getAddress(): ?string
+    {
+        return $this->address;
+    }
+
+    public function setAddress(?string $address): static
+    {
+        $this->address = $address;
+
+        return $this;
+    }
+
     public function getImageUrl(): ?string
     {
         return $this->image_url;
@@ -209,20 +229,38 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    /**
+     * @return Collection<int, Product>
+     */
+    public function getProducts(): Collection
+    {
+        return $this->products;
+    }
+
+    public function addProduct(Product $product): static
+    {
+        if (!$this->products->contains($product)) {
+            $this->products->add($product);
+            $product->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeProduct(Product $product): static
+    {
+        if ($this->products->removeElement($product)) {
+            // set the owning side to null (unless already changed)
+            if ($product->getUser() === $this) {
+                $product->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
     public function getUserIdentifier(): string
     {
         return $this->email;
-    }
-
-    public function getAddress(): ?string
-    {
-        return $this->address;
-    }
-
-    public function setAddress(?string $address): static
-    {
-        $this->address = $address;
-
-        return $this;
     }
 }
