@@ -3,12 +3,10 @@
 namespace App\Controller;
 
 use App\Entity\Address;
-use App\Entity\File;
 use App\Entity\Product;
 use App\Repository\ProductRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,39 +17,27 @@ use Symfony\Component\Serializer\SerializerInterface;
 class ProductController extends AbstractController
 {
     #[Route('/products', name: 'api_product', methods: ['GET'])]
-    public function getAllProducts(SerializerInterface $serializer, ProductRepository $productRepository, Request $request): JsonResponse
+    public function getFilteredProducts(SerializerInterface $serializer, ProductRepository $productRepository, Request $request): JsonResponse
     {
-        $products = $productRepository->findAll();
+        $filters = $request->query->all();
+        $products = $productRepository->findFilteredProducts($filters);
         $jsonProducts = $serializer->serialize($products, 'json', ['groups' => 'product:read']);
 
         return new JsonResponse($jsonProducts, Response::HTTP_OK, [], true);
     }
 
-    #[Route('/products/search', name: 'api_product_search', methods: ['GET'])]
-    public function searchProducts(SerializerInterface $serializer, ProductRepository $productRepository, Request $request): JsonResponse
+    #[Route('/product/{id}', name: 'api_product_show', methods: ['GET'])]
+    public function getProduct(int $id, SerializerInterface $serializer, ProductRepository $productRepository): JsonResponse
     {
-        // Récupérer les paramètres de recherche
-        $latitude = $request->query->get('latitude');
-        $longitude = $request->query->get('longitude');
-        $radius = $request->query->get('radius', 10); // Rayon par défaut: 10km
+        $product = $productRepository->findDetailedProduct($id);
         
-        // Vérifier que les coordonnées sont fournies
-        if (!$latitude || !$longitude) {
-            return new JsonResponse(['error' => 'Les coordonnées (latitude et longitude) sont requises'], Response::HTTP_BAD_REQUEST);
+        if (!$product) {
+            return new JsonResponse(['message' => 'Produit non trouvé'], Response::HTTP_NOT_FOUND);
         }
         
-        // Convertir en valeurs numériques
-        $latitude = (float) $latitude;
-        $longitude = (float) $longitude;
-        $radius = (float) $radius;
+        $jsonProduct = $serializer->serialize($product, 'json', ['groups' => 'product:read']);
         
-        // Rechercher les produits dans le rayon spécifié
-        $products = $productRepository->findByDistance($latitude, $longitude, $radius);
-        
-        // Sérialiser les résultats
-        $jsonProducts = $serializer->serialize($products, 'json', ['groups' => 'product:read']);
-        
-        return new JsonResponse($jsonProducts, Response::HTTP_OK, [], true);
+        return new JsonResponse($jsonProduct, Response::HTTP_OK, [], true);
     }
 
     #[Route('/product/last-chance', name: 'last_chance', methods: ['GET'])]
@@ -82,7 +68,7 @@ class ProductController extends AbstractController
     }
 
     #[Route('/product/new', name: 'product', methods: ['POST'])]
-    public function newProduct(Request $request, EntityManagerInterface $entityManager, Filesystem $filesystem): JsonResponse
+    public function newProduct(Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
         try {
             $user = $this->getUser();
@@ -110,42 +96,23 @@ class ProductController extends AbstractController
                 $product->setPrice($price);
             }
 
-            $files = $request->files->get('files');
-            if ($files) {
-                foreach ($files as $file) {
-                    try {
-                        $originalName = $file->getClientOriginalName();
-                        $size = (string) $file->getSize();
-                        $fileName = md5(uniqid()).'.'.$file->guessExtension();
-                        $filePath = $this->getParameter('products_images_directory');
+           $files = $request->files->get('files');
+           if ($files) {
+               foreach ($files as $file) {
+                   if ($file->isValid()) {
+                       $fileName = md5(uniqid()).'.'.$file->guessExtension();
 
-                        if(!$filesystem->exists($filePath)) {
-                            $filesystem->mkdir($filePath);
-                        }
+                       $file->move(
+                           $this->getParameter('products_images_directory'),
+                           $fileName
+                       );
 
-                        $file->move(
-                            $filePath,
-                            $fileName
-                        );
-
-                        $productImage = new File();
-
-                        $productImage
-                            ->setOriginalName($originalName)
-                            ->setSize($size)
-                            ->setPath($fileName)
-                            ->setCreatedAt(new \DateTime());
-                        $productImage->setUpdatedAt(new \DateTime());
-                        $product->addFile($productImage);
-                        $entityManager->persist($productImage);
-                    } catch(\Exception $e) {
-                        return new JsonResponse([
-                            'error' => $e->getMessage(),
-                            'trace' => $e->getTraceAsString()
-                        ], 500);
-                    }
-                }
-            }
+                       $productImage = new File();
+                       $productImage->setPath($fileName);
+                       $product->addFile($productImage);
+                   }
+               }
+           }
 
             $adress = new Address();
             $adress
