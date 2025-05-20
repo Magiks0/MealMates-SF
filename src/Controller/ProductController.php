@@ -3,10 +3,12 @@
 namespace App\Controller;
 
 use App\Entity\Address;
+use App\Entity\File;
 use App\Entity\Product;
 use App\Repository\ProductRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -30,13 +32,13 @@ class ProductController extends AbstractController
     public function getProduct(int $id, SerializerInterface $serializer, ProductRepository $productRepository): JsonResponse
     {
         $product = $productRepository->findDetailedProduct($id);
-        
+
         if (!$product) {
             return new JsonResponse(['message' => 'Produit non trouvé'], Response::HTTP_NOT_FOUND);
         }
-        
+
         $jsonProduct = $serializer->serialize($product, 'json', ['groups' => 'product:read']);
-        
+
         return new JsonResponse($jsonProduct, Response::HTTP_OK, [], true);
     }
 

@@ -23,7 +23,7 @@ class UserController extends AbstractController
         return new JsonResponse($jsonUsers, Response::HTTP_OK, [], true);
     }
     
-    #[Route('/users/me', name: 'current_user', methods: ['GET'])]
+    #[Route('/user/profile', name: 'current_user', methods: ['GET'])]
     public function getCurrentUser(SerializerInterface $serializer): JsonResponse
     {
         $currentUser = $this->getUser();
