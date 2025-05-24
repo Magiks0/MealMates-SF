@@ -18,6 +18,7 @@ class Product
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups('product:read')]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
@@ -67,11 +68,15 @@ class Product
      * @var Collection<int, Dietary>
      */
     #[ORM\ManyToMany(targetEntity: Dietary::class, inversedBy: 'products')]
+    #[Groups('product:read')]
     private Collection $dietaries;
 
     #[ORM\ManyToOne(inversedBy: 'products')]
     #[Groups('product:read')]
     private ?Address $address = null;
+
+    #[Groups('product:read')]
+    private $location = null;
 
     public function __construct()
     {
@@ -223,14 +228,14 @@ class Product
     }
 
     /**
-     * @return Collection<int, Dietary>
+     * @return Collection<int, self>
      */
     public function getDietaries(): Collection
     {
         return $this->dietaries;
     }
 
-    public function addDietary(Dietary $dietary): static
+    public function addDietary(self $dietary): static
     {
         if (!$this->dietaries->contains($dietary)) {
             $this->dietaries->add($dietary);
@@ -239,7 +244,7 @@ class Product
         return $this;
     }
 
-    public function removeDietary(Dietary $dietary): static
+    public function removeDietary(self $dietary): static
     {
         $this->dietaries->removeElement($dietary);
 
@@ -258,4 +263,12 @@ class Product
         return $this;
     }
 
+    #[Groups('product:read')]
+    public function getLocation(): ?string
+    {
+        if ($this->address) {
+            return $this->address->getName();
+        }
+        return null;
+    }
 }
