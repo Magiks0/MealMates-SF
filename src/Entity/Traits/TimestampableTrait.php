@@ -6,12 +6,14 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 trait TimestampableTrait
 {
     use TimestampableEntity;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: false)]
+    #[Groups('chat:read')]
     #[Gedmo\Timestampable(on: 'create')]
     protected $createdAt;
 

@@ -30,6 +30,9 @@ class Chat
     #[ORM\OneToMany(targetEntity: Message::class, mappedBy: 'chat')]
     private Collection $messages;
 
+    #[ORM\ManyToOne(inversedBy: 'chats')]
+    private ?Product $product = null;
+
     public function __construct()
     {
         $this->messages = new ArrayCollection();
@@ -90,6 +93,18 @@ class Chat
                 $message->setChat(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getProduct(): ?Product
+    {
+        return $this->product;
+    }
+
+    public function setProduct(?Product $product): static
+    {
+        $this->product = $product;
 
         return $this;
     }
