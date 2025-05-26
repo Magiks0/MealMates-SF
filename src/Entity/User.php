@@ -42,8 +42,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Availability::class, mappedBy: 'user_id', orphanRemoval: true)]
     private Collection $availabilities;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['user:read', 'product:read'])]
+    #[ORM\Column(length: 255)]
+    #[Groups('product:read')]
     private ?string $username = null;
 
     #[ORM\Column(length: 255, nullable: true)]

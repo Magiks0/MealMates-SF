@@ -34,7 +34,7 @@ class ProductRepository extends ServiceEntityRepository
                 ->setParameter('maxPrice', $filters['maxPrice']);
         };
 
-        if (!empty($filters['dietetic'])) {
+        if (!empty($filters['dietary'])) {
             $qb
                 ->join('p.dietaries', 'd')
                 ->andWhere('d.name = :dietetic')
@@ -68,6 +68,7 @@ class ProductRepository extends ServiceEntityRepository
             ->where('p.peremptionDate BETWEEN :start AND :end')
             ->setParameter('start', $tomorrow)
             ->setParameter('end', $dayAfterTomorrow)
+            ->setMaxResults(10)
             ->getQuery()
             ->getResult();
     }
@@ -80,13 +81,14 @@ class ProductRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('p')
             ->where('p.createdAt BETWEEN :start AND :end')
             ->orderBy('p.createdAt', 'DESC')
+            ->setMaxResults(10)
             ->setParameter('start', $yesterdayStart)
             ->setParameter('end', $now)
             ->getQuery()
             ->getResult();
     }
 
-    public function findDetailedProduct(int $id): ?Product
+    public function findDetailedProduct(string $id): ?array
     {
         return $this->createQueryBuilder('p')
             ->andWhere('p.id = :id')
@@ -98,6 +100,6 @@ class ProductRepository extends ServiceEntityRepository
             ->leftJoin('p.files', 'f')
             ->addSelect('u', 't', 'd', 'a', 'f')
             ->getQuery()
-            ->getOneOrNullResult();
+            ->getResult();
     }
 }
