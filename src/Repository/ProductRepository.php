@@ -100,4 +100,13 @@ class ProductRepository extends ServiceEntityRepository
             ->getQuery()
             ->getOneOrNullResult();
     }
+
+    public function findProductsExpiringOn(\DateTime $date): array
+    {
+        return $this->createQueryBuilder('p')
+            ->where('DATE(p.peremptionDate) = :date')
+            ->setParameter('date', $date->format('Y-m-d'))
+            ->getQuery()
+            ->getResult();
+    }
 }
