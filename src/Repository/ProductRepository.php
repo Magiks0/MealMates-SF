@@ -88,7 +88,7 @@ class ProductRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-    public function findDetailedProduct(int $id): ?Product
+    public function findDetailedProduct(string $id): ?array
     {
         return $this->createQueryBuilder('p')
             ->andWhere('p.id = :id')
@@ -100,6 +100,6 @@ class ProductRepository extends ServiceEntityRepository
             ->leftJoin('p.files', 'f')
             ->addSelect('u', 't', 'd', 'a', 'f')
             ->getQuery()
-            ->getOneOrNullResult();
+            ->getResult();
     }
 }

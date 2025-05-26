@@ -28,10 +28,10 @@ class ProductController extends AbstractController
         return new JsonResponse($jsonProducts, Response::HTTP_OK, [], true);
     }
 
-    #[Route('/product/{id}', name: 'api_product_show', methods: ['GET'])]
-    public function getProduct(int $id, SerializerInterface $serializer, ProductRepository $productRepository): JsonResponse
+    #[Route('/products/{id}', name: 'api_product_show', methods: ['GET'])]
+    public function getProduct(int|string $id, SerializerInterface $serializer, ProductRepository $productRepository): JsonResponse
     {
-        $product = $productRepository->findDetailedProduct($id);
+        $product = $productRepository->find($id);
 
         if (!$product) {
             return new JsonResponse(['message' => 'Produit non trouvé'], Response::HTTP_NOT_FOUND);
