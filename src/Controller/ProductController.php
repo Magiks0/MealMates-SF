@@ -6,8 +6,10 @@ use App\Entity\Address;
 use App\Entity\File;
 use App\Entity\Product;
 use App\Repository\ProductRepository;
+use App\Service\StripeService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -18,11 +20,16 @@ use Symfony\Component\Serializer\SerializerInterface;
 #[Route('/api')]
 class ProductController extends AbstractController
 {
+    public function __construct(
+        private readonly Security $security,
+    ){
+    }
+
     #[Route('/products', name: 'api_product', methods: ['GET'])]
     public function getFilteredProducts(SerializerInterface $serializer, ProductRepository $productRepository, Request $request): JsonResponse
     {
         $filters = $request->query->all();
-        $products = $productRepository->findFilteredProducts($filters);
+        $products = $productRepository->findFilteredProducts($filters, $this->security->getUser());
         $jsonProducts = $serializer->serialize($products, 'json', ['groups' => 'product:read']);
 
         return new JsonResponse($jsonProducts, Response::HTTP_OK, [], true);
@@ -45,7 +52,7 @@ class ProductController extends AbstractController
     #[Route('/product/last-chance', name: 'last_chance', methods: ['GET'])]
     public function getLastChanceProducts(SerializerInterface $serializer, ProductRepository $productRepository): JsonResponse
     {
-        $products = $productRepository->findLastChanceProducts();
+        $products = $productRepository->findLastChanceProducts($this->security->getUser());
         $jsonProducts = $serializer->serialize($products, 'json', ['groups' => 'product:read']);
 
         return new JsonResponse($jsonProducts, Response::HTTP_OK, [], true);
@@ -63,14 +70,14 @@ class ProductController extends AbstractController
     #[Route('/product/recent', name: 'recent_products', methods: ['GET'])]
     public function getRecentProducts(SerializerInterface $serializer, ProductRepository $productRepository): JsonResponse
     {
-        $products = $productRepository->findRecentProducts();
+        $products = $productRepository->findRecentProducts($this->security->getUser());
         $jsonProducts = $serializer->serialize($products, 'json', ['groups' => 'product:read']);
 
         return new JsonResponse($jsonProducts, Response::HTTP_OK, [], true);
     }
 
     #[Route('/product/new', name: 'product', methods: ['POST'])]
-    public function newProduct(Request $request, EntityManagerInterface $entityManager): JsonResponse
+    public function newProduct(Request $request, EntityManagerInterface $entityManager, StripeService $stripeService, Filesystem $filesystem): JsonResponse
     {
         try {
             $user = $this->getUser();
@@ -80,6 +87,10 @@ class ProductController extends AbstractController
             $peremptionDate = new \DateTime($request->request->get('peremptionDate'));
             $price = (float)$request->request->get('price');
             $donation = filter_var($request->request->get('donation'), FILTER_VALIDATE_BOOLEAN);
+
+            if ($price === 0) {
+                $donation = true;
+            }
 
             $collection_date = new \DateTime();
 
@@ -98,23 +109,40 @@ class ProductController extends AbstractController
                 $product->setPrice($price);
             }
 
-           $files = $request->files->get('files');
-           if ($files) {
-               foreach ($files as $file) {
-                   if ($file->isValid()) {
-                       $fileName = md5(uniqid()).'.'.$file->guessExtension();
+            $files = $request->files->get('files');
+            if ($files) {
+                foreach ($files as $file) {
+                    try {
+                        $originalName = $file->getClientOriginalName();
+                        $size = (string) $file->getSize();
+                        $fileName = md5(uniqid()).'.'.$file->guessExtension();
+                        $filePath = $this->getParameter('products_images_directory');
 
-                       $file->move(
-                           $this->getParameter('products_images_directory'),
-                           $fileName
-                       );
+                        if(!$filesystem->exists($filePath)) {
+                            $filesystem->mkdir($filePath);
+                        }
 
-                       $productImage = new File();
-                       $productImage->setPath($fileName);
-                       $product->addFile($productImage);
-                   }
-               }
-           }
+                        $file->move(
+                            $filePath,
+                            $fileName
+                        );
+
+                        $productImage = new File();
+
+                        $productImage
+                            ->setOriginalName($originalName)
+                            ->setSize($size)
+                            ->setPath($fileName);
+                        $product->addFile($productImage);
+                        $entityManager->persist($productImage);
+                    } catch(\Exception $e) {
+                        return new JsonResponse([
+                            'error' => $e->getMessage(),
+                            'trace' => $e->getTraceAsString()
+                        ], 500);
+                    }
+                }
+            }
 
             $adress = new Address();
             $adress
@@ -123,10 +151,13 @@ class ProductController extends AbstractController
                 ->setLongitude('34.3454535');
 
             $entityManager->persist($adress);
-
-            $product->setCreatedAt(new \DateTime());
-            $product->setUpdatedAt(new \DateTime());
             $product->setAddress($adress);
+
+            $stripeProduct = $stripeService->createProduct($product);
+            $product->setStripeProductId($stripeProduct->id);
+
+            $stripePrice = $stripeService->createPrice($product);
+            $product->setStripePriceId($stripePrice->id);
 
             $entityManager->persist($product);
             $entityManager->flush();
