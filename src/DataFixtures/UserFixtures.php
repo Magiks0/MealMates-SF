@@ -2,81 +2,91 @@
 
 namespace App\DataFixtures;
 
+use App\Entity\User;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
-use App\Entity\User;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 
-class UserFixtures extends Fixture implements DependentFixtureInterface
+class UserFixtures extends Fixture
 {
-    public const REFERENCE_IDENTIFIER = "user_";
+    private UserPasswordHasherInterface $passwordHasher;
 
     public function __construct(UserPasswordHasherInterface $passwordHasher)
     {
+        $this->passwordHasher = $passwordHasher;
     }
 
     public function load(ObjectManager $manager): void
     {
-        $users = [
+        $usersData = [
             [
-            'email' => 'user1@example.com',
-            'password' => 'xxx',
-            'isVerified' => true,
-            'address' => '10 Rue de Paris, Senlis',
-            'imageUrl' => 'https://example.com/images/user1.jpg',
-            'note' => random_int(2, 5),
-            'username' => 'user1'
+                'email' => 'luludupas9@gmail.com',
+                'username' => 'Magiks',
+                'roles' => ['ROLE_USER'],
+                'password' => 'password123',
+                'isVerified' => true,
+                'note' => 4.5,
+                'address' => '9 Rue de Janville, Mouy',
+                'image_url' => 'https://randomuser.me/api/portraits/women/1.jpg',
             ],
             [
-            'email' => 'user2@example.com',
-            'password' => 'xxx',
-            'isVerified' => false,
-            'address' => '15 Rue de la République, Senlis',
-            'imageUrl' => 'https://example.com/images/user2.jpg',
-            'note' => random_int(2, 5),
-            'username' => 'user2'
+                'email' => 'tomzarb@gmail.com',
+                'username' => 'Tom Zarb',
+                'roles' => ['ROLE_USER'],
+                'password' => 'password123',
+                'isVerified' => false,
+                'note' => 3.7,
+                'address' => '5 Boulevard Jean-Jaurès, Lyon',
+                'image_url' => 'https://randomuser.me/api/portraits/men/2.jpg',
             ],
             [
-            'email' => 'user3@example.com',
-            'password' => 'xxx',
-            'isVerified' => true,
-            'address' => '20 Avenue des Jardins, Senlis',
-            'imageUrl' => 'https://example.com/images/user3.jpg',
-            'note' => random_int(2, 5),
-            'username' => 'user3'
+                'email' => 'floriansauvage@gmail.com',
+                'username' => 'Flo',
+                'roles' => ['ROLE_USER'],
+                'password' => 'password123',
+                'isVerified' => true,
+                'note' => 4.9,
+                'address' => '7 Rue de la République, Marseille',
+                'image_url' => 'https://randomuser.me/api/portraits/women/3.jpg',
             ],
             [
-            'email' => 'user4@example.com',
-            'password' => 'xxx',
-            'isVerified' => false,
-            'address' => '5 Place de l’Église, Senlis',
-            'imageUrl' => 'https://example.com/images/user4.jpg',
-            'note' => random_int(2, 5),
-            'username' => 'user4'
-            ]
+                'email' => 'david@example.com',
+                'username' => 'david',
+                'roles' => ['ROLE_USER'],
+                'password' => 'password123',
+                'isVerified' => true,
+                'note' => null,
+                'address' => '3 Place de la Comédie, Montpellier',
+                'image_url' => 'https://randomuser.me/api/portraits/men/4.jpg',
+            ],
+            [
+                'email' => 'eve@example.com',
+                'username' => 'eve',
+                'roles' => ['ROLE_USER'],
+                'password' => 'password123',
+                'isVerified' => false,
+                'note' => 4.1,
+                'address' => '12 Rue Fesch, Ajaccio',
+                'image_url' => 'https://randomuser.me/api/portraits/women/5.jpg',
+            ],
         ];
 
-        foreach ($users as $i => $userData) {
+        foreach ($usersData as $i => $data) {
             $user = new User();
-            $user->setEmail($userData['email']);
-            $user->setPassword($userData['password']);
-            $user->setIsVerified($userData['isVerified']);
-            $user->setAddress($userData['address']);
-            $user->setImageUrl($userData['imageUrl']);
-            $user->setNote($userData['note']);
-            $user->setUsername($userData['username']);
+            $user->setEmail($data['email']);
+            $user->setUsername($data['username']);
+            $user->setRoles($data['roles']);
+            // Hash le mot de passe
+            $hashedPassword = $this->passwordHasher->hashPassword($user, $data['password']);
+            $user->setPassword($hashedPassword);
+            $user->setIsVerified($data['isVerified']);
+            $user->setNote($data['note']);
+            $user->setAddress($data['address']);
+            $user->setImageUrl($data['image_url']);
             $manager->persist($user);
-            $this->addReference(self::REFERENCE_IDENTIFIER.$i, $user);
+            $this->addReference('user_'.$i, $user);
         }
 
         $manager->flush();
-    }
-
-    public function getDependencies(): array
-    {
-        return [
-            DietaryFixtures::class,
-        ];
     }
 }

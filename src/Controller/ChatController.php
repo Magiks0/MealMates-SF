@@ -191,8 +191,6 @@ class ChatController extends AbstractController
         // Créer le nouveau message
         $message = new Message();
         $message->setContent($data['content']);
-        $message->setCreatedAt(new \DateTime());
-        $message->setUpdatedAt(new \DateTime());
         $message->setAuthor($currentUser);
         $message->setRecipient($recipient);
         $message->setChat($chat);
@@ -245,10 +243,7 @@ class ChatController extends AbstractController
             $message = new Message();
             $message->setChat($existingChat);
             $message->setAuthor($currentUser);
-            $message->setCreatedAt(new \DateTime());
-            $message->setUpdatedAt(new \DateTime());
             $message->setContent($messageContent);
-            $message->setCreatedAt(new \DateTimeImmutable());
 
             $this->entityManager->persist($message);
             $this->entityManager->flush();
@@ -264,8 +259,6 @@ class ChatController extends AbstractController
         $chat->setUser1($currentUser);
         $chat->setUser2($otherUser);
         $chat->setProduct($product);
-        $chat->setCreatedAt(new \DateTime());
-        $chat->setUpdatedAt(new \DateTime());
 
         $this->entityManager->persist($chat);
 
@@ -273,9 +266,6 @@ class ChatController extends AbstractController
         $message->setChat($chat);
         $message->setAuthor($currentUser);
         $message->setContent($messageContent);
-        $message->setCreatedAt(new \DateTime());
-        $message->setUpdatedAt(new \DateTime());
-        $message->setCreatedAt(new \DateTimeImmutable());
 
         $this->entityManager->persist($message);
         $this->entityManager->flush();
