@@ -3,8 +3,12 @@
 namespace App\Repository;
 
 use App\Entity\Product;
+use App\Entity\User;
+use Cocur\Slugify\Slugify;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\Serializer\SerializerInterface;
 
 /**
  * @extends ServiceEntityRepository<Product>
@@ -16,9 +20,12 @@ class ProductRepository extends ServiceEntityRepository
         parent::__construct($registry, Product::class);
     }
 
-    public function findFilteredProducts(array $filters = [])
+    public function findFilteredProducts(array $filters, User $user)
     {
-        $qb = $this->createQueryBuilder('p');
+        $qb = $this
+                ->createQueryBuilder('p')
+                ->where('p.published = true')
+            ;
 
         if (!empty($filters['minPrice'])) {
             $qb
@@ -32,7 +39,7 @@ class ProductRepository extends ServiceEntityRepository
                 ->setParameter('maxPrice', $filters['maxPrice']);
         }
 
-        if (!empty($filters['dietetic'])) {
+        if (!empty($filters['dietary'])) {
             $qb
                 ->join('p.dietaries', 'd')
                 ->andWhere('d.name = :dietetic')
@@ -61,6 +68,10 @@ class ProductRepository extends ServiceEntityRepository
                 $filters['radius']
             );
         }
+
+        $qb->innerJoin('p.user', 'u')
+            ->andWhere('u.id NOT LIKE :userId')
+            ->setParameter('userId', $user->getId());
 
         return $qb->orderBy('p.createdAt', 'DESC')->getQuery()->getResult();
     }
@@ -98,7 +109,7 @@ class ProductRepository extends ServiceEntityRepository
         return $qb->getQuery()->getResult();
     }
 
-    public function findLastChanceProducts(): array
+    public function findLastChanceProducts(User $user): array
     {
         $now = new \DateTime();
         $tomorrow = (clone $now)->modify('+1 day')->setTime(0, 0, 0);
@@ -106,22 +117,45 @@ class ProductRepository extends ServiceEntityRepository
 
         return $this->createQueryBuilder('p')
             ->where('p.peremptionDate BETWEEN :start AND :end')
+            ->innerJoin('p.user', 'u')
+            ->andWhere('u.id NOT LIKE :userId')
+            ->setParameter('userId', $user->getId())
             ->setParameter('start', $tomorrow)
             ->setParameter('end', $dayAfterTomorrow)
+            ->setMaxResults(10)
             ->getQuery()
             ->getResult();
     }
 
-    public function findRecentProducts(): array
+    public function findRecentProducts(User $user): array
     {
         $yesterdayStart = (new \DateTime())->modify('-1 day')->setTime(0, 0, 0);
         $now = new \DateTime();
 
         return $this->createQueryBuilder('p')
             ->where('p.createdAt BETWEEN :start AND :end')
+            ->innerJoin('p.user', 'u')
+            ->andWhere('u.id NOT LIKE :userId')
             ->orderBy('p.createdAt', 'DESC')
+            ->setMaxResults(10)
+            ->setParameter('userId', $user->getId())
             ->setParameter('start', $yesterdayStart)
             ->setParameter('end', $now)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function findDetailedProduct(string $id): ?array
+    {
+        return $this->createQueryBuilder('p')
+            ->andWhere('p.id = :id')
+            ->setParameter('id', $id)
+            ->leftJoin('p.user', 'u')
+            ->leftJoin('p.type', 't')
+            ->leftJoin('p.dietaries', 'd')
+            ->leftJoin('p.address', 'a')
+            ->leftJoin('p.files', 'f')
+            ->addSelect('u', 't', 'd', 'a', 'f')
             ->getQuery()
             ->getResult();
     }

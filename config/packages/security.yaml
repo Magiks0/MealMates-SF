@@ -6,7 +6,7 @@ security:
         property: username
 
   password_hashers:
-    App\Entity\User: "auto"
+    App\Entity\User: auto
 
   firewalls:
     dev:
@@ -16,14 +16,7 @@ security:
     login:
       pattern: ^/api/login
       stateless: true
-      provider: app_user_provider
-      jwt: ~
-      json_login:
-        check_path: /api/login
-        username_path: username
-        password_path: password
-        success_handler: lexik_jwt_authentication.handler.authentication_success
-        failure_handler: lexik_jwt_authentication.handler.authentication_failure
+      security: false
 
     api:
       pattern: ^/api
@@ -35,8 +28,4 @@ security:
     - { path: ^/api/login, roles: PUBLIC_ACCESS }
     - { path: ^/api/register, roles: PUBLIC_ACCESS }
     - { path: ^/api/google-login, roles: PUBLIC_ACCESS }
-    - { path: ^/api/, roles: IS_AUTHENTICATED_FULLY }
-    - { path: ^/api/users/me, roles: IS_AUTHENTICATED_FULLY }
-    - { path: ^/api/users/address, roles: IS_AUTHENTICATED_FULLY }
-    - { path: ^/api/users/image, roles: IS_AUTHENTICATED_FULLY }
-    - { path: ^/api/users/username, roles: IS_AUTHENTICATED_FULLY }
+    - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }

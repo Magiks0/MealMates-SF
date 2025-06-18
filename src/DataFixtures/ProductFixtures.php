@@ -2,132 +2,183 @@
 
 namespace App\DataFixtures;
 
-use Doctrine\Bundle\FixturesBundle\Fixture;
-use Doctrine\Common\DataFixtures\DependentFixtureInterface;
-use Doctrine\Persistence\ObjectManager;
-use App\Entity\Product;
-use App\Entity\User;
-use App\Entity\Type;
-use App\Entity\Dietary;
 use App\Entity\Address;
-use DateTime;
+use App\Entity\Product;
+use App\Entity\Type;
+use App\Entity\User;
+use App\Service\StripeService;
+use Doctrine\Bundle\FixturesBundle\Fixture;
+use Doctrine\Persistence\ObjectManager;
+use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 
 class ProductFixtures extends Fixture implements DependentFixtureInterface
 {
+    public function __construct(private StripeService $stripeService)
+    {}
+
     public function load(ObjectManager $manager): void
     {
-        // Création de quelques adresses
-        $addresses = [
+        $productsData = [
             [
-                'name' => '20 rue de la Paix, 75002 Paris',
-                'latitude' => 48.8697,
-                'longitude' => 2.3322
+                'title' => 'Tomates cerises',
+                'description' => 'Tomates cerises fraîches du jardin',
+                'quantity' => 30,
+                'peremptionDate' => new \DateTime('+5 days'),
+                'price' => 4.0,
+                'donation' => false,
+                'collection_date' => new \DateTime('+1 day'),
+                'user_reference' => 'user_1',
+                'address_reference' => 'address_2',
+                'type_reference' => 'type_0', // Légumes
+                'published' => true,
             ],
             [
-                'name' => '55 rue de la République, 69002 Lyon',
-                'latitude' => 45.7640,
-                'longitude' => 4.8357
+                'title' => 'Pommes Bio',
+                'description' => 'Pommes bio croquantes et sucrées',
+                'quantity' => 50,
+                'peremptionDate' => new \DateTime('+10 days'),
+                'price' => 3.5,
+                'donation' => false,
+                'collection_date' => new \DateTime('+2 days'),
+                'user_reference' => 'user_0',
+                'address_reference' => 'address_3',
+                'type_reference' => 'type_1', // Fruits
+                'published' => true,
             ],
             [
-                'name' => '10 rue des Lilas, 31000 Toulouse',
-                'latitude' => 43.6045,
-                'longitude' => 1.4442
-            ]
-        ];
-
-        $addressEntities = [];
-        foreach ($addresses as $addressData) {
-            $address = new Address();
-            $address->setName($addressData['name']);
-            $address->setLatitude($addressData['latitude']);
-            $address->setLongitude($addressData['longitude']);
-            $manager->persist($address);
-            $addressEntities[] = $address;
-        }
-
-        $products = [
+                'title' => 'Pain Complet',
+                'description' => 'Pain complet frais du boulanger',
+                'quantity' => 20,
+                'peremptionDate' => new \DateTime('+2 days'),
+                'price' => 2.2,
+                'donation' => false,
+                'collection_date' => new \DateTime('+1 day'),
+                'user_reference' => 'user_2',
+                'address_reference' => 'address_1',
+                'type_reference' => 'type_5', // Plats préparés
+                'published' => true,
+            ],
             [
-                'title' => 'Lot de carottes fraîches',
-                'description' => 'Carottes locales récoltées du jour. À consommer de préférence dans les prochains jours.',
+                'title' => 'Fromage de Chèvre',
+                'description' => 'Fromage de chèvre local et crémeux',
+                'quantity' => 15,
+                'peremptionDate' => new \DateTime('+8 days'),
+                'price' => 6.0,
+                'donation' => false,
+                'collection_date' => new \DateTime('+3 days'),
+                'user_reference' => 'user_3',
+                'address_reference' => 'address_2',
+                'type_reference' => 'type_4', // Produits laitiers
+                'published' => true,
+            ],
+            [
+                'title' => 'Bananes',
+                'description' => 'Bananes fraîches et mûres à point',
+                'quantity' => 40,
+                'peremptionDate' => new \DateTime('+7 days'),
+                'price' => 2.8,
+                'donation' => false,
+                'collection_date' => new \DateTime('+1 day'),
+                'user_reference' => 'user_1',
+                'address_reference' => 'address_3',
+                'type_reference' => 'type_1', // Fruits
+                'published' => true,
+            ],
+            [
+                'title' => 'Carottes',
+                'description' => 'Carottes bio croquantes',
+                'quantity' => 25,
+                'peremptionDate' => new \DateTime('+9 days'),
+                'price' => 3.0,
+                'donation' => false,
+                'collection_date' => new \DateTime('+2 days'),
+                'user_reference' => 'user_0',
+                'address_reference' => 'address_2',
+                'type_reference' => 'type_0', // Légumes
+                'published' => true,
+            ],
+            [
+                'title' => 'Chocolat Noir',
+                'description' => 'Tablette de chocolat noir 70%',
                 'quantity' => 10,
-                'peremptionDate' => new DateTime('+5 days'),
-                'price' => 2,
+                'peremptionDate' => new \DateTime('+30 days'),
+                'price' => 5.5,
                 'donation' => false,
-                'collectionDate' => new DateTime('+2 days'),
-                'user' => $this->getReference(UserFixtures::REFERENCE_IDENTIFIER.'1', User::class),
-                'type' => $this->getReference(TypeFixtures::REFERENCE_IDENTIFIER.'0', Type::class), // Légumes
-                'dietetic' => $this->getReference(DietaryFixtures::REFERENCE_IDENTIFIER.'0', Dietary::class), // Végétarien
-                'address' => $addressEntities[0]
+                'collection_date' => new \DateTime('+1 day'),
+                'user_reference' => 'user_3',
+                'address_reference' => 'address_3',
+                'type_reference' => 'type_7', // Boissons (un peu approximatif mais dans ta liste)
+                'published' => true,
             ],
             [
-                'title' => 'Pain aux céréales fait maison',
-                'description' => 'Pain aux céréales fait maison ce matin. Parfait pour accompagner vos repas.',
-                'quantity' => 2,
-                'peremptionDate' => new DateTime('+2 days'),
-                'price' => 3.50,
-                'donation' => false,
-                'collectionDate' => new DateTime('+1 days'),
-                'user' => $this->getReference(UserFixtures::REFERENCE_IDENTIFIER.'0', User::class),
-                'type' => $this->getReference(TypeFixtures::REFERENCE_IDENTIFIER.'5', Type::class), // Plats préparés
-                'dietetic' => $this->getReference(DietaryFixtures::REFERENCE_IDENTIFIER.'2', Dietary::class), // Sans gluten
-                'address' => $addressEntities[1]
-            ],
-            [
-                'title' => 'Yaourts nature bio',
-                'description' => 'Yaourts nature bio artisanaux. Lot de 4 pots en verre consignés.',
-                'quantity' => 4,
-                'peremptionDate' => new DateTime('+7 days'),
-                'price' => 4,
-                'donation' => false,
-                'collectionDate' => new DateTime('+3 days'),
-                'user' => $this->getReference(UserFixtures::REFERENCE_IDENTIFIER.'2', User::class),
-                'type' => $this->getReference(TypeFixtures::REFERENCE_IDENTIFIER.'4', Type::class), // Produits laitiers
-                'dietetic' => $this->getReference(DietaryFixtures::REFERENCE_IDENTIFIER.'7', Dietary::class), // Sans lactose
-                'address' => $addressEntities[2]
-            ],
-            [
-                'title' => 'Pommes Golden Bio',
-                'description' => 'Pommes Golden bio du verger local. Parfaites pour les desserts ou en encas.',
-                'quantity' => 6,
-                'peremptionDate' => new DateTime('+14 days'),
-                'price' => 0,
+                'title' => 'Yaourt Nature',
+                'description' => 'Yaourt nature fermier',
+                'quantity' => 18,
+                'peremptionDate' => new \DateTime('+4 days'),
+                'price' => 1.2,
                 'donation' => true,
-                'collectionDate' => new DateTime('+1 days'),
-                'user' => $this->getReference(UserFixtures::REFERENCE_IDENTIFIER.'1', User::class),
-                'type' => $this->getReference(TypeFixtures::REFERENCE_IDENTIFIER.'1', Type::class), // Fruits
-                'dietetic' => $this->getReference(DietaryFixtures::REFERENCE_IDENTIFIER.'0', Dietary::class), // Végétarien
-                'address' => $addressEntities[0]
+                'collection_date' => new \DateTime('+1 day'),
+                'user_reference' => 'user_4',
+                'address_reference' => 'address_1',
+                'type_reference' => 'type_4', // Produits laitiers
+                'published' => false,
             ],
             [
-                'title' => 'Fraises de saison',
-                'description' => 'Fraises fraîches cultivées sans pesticides. Idéales pour vos desserts estivaux.',
-                'quantity' => 500, 
-                'peremptionDate' => new DateTime('+3 days'),
-                'price' => 3.50,
+                'title' => 'Poulet Fermier',
+                'description' => 'Poulet fermier élevé en plein air',
+                'quantity' => 8,
+                'peremptionDate' => new \DateTime('+3 days'),
+                'price' => 12.0,
                 'donation' => false,
-                'collectionDate' => new DateTime('+1 days'),
-                'user' => $this->getReference(UserFixtures::REFERENCE_IDENTIFIER.'2', User::class),
-                'type' => $this->getReference(TypeFixtures::REFERENCE_IDENTIFIER.'1', Type::class), // Fruits
-                'dietetic' => $this->getReference(DietaryFixtures::REFERENCE_IDENTIFIER.'0', Dietary::class), // Végétarien
-                'address' => $addressEntities[2]
-            ]
+                'collection_date' => new \DateTime('+2 days'),
+                'user_reference' => 'user_2',
+                'address_reference' => 'address_2',
+                'type_reference' => 'type_2', // Viandes
+                'published' => true,
+            ],
+            [
+                'title' => 'Salade Verte',
+                'description' => 'Salade fraîche et croquante',
+                'quantity' => 35,
+                'peremptionDate' => new \DateTime('+5 days'),
+                'price' => 1.8,
+                'donation' => true,
+                'collection_date' => new \DateTime('+1 day'),
+                'user_reference' => 'user_1',
+                'address_reference' => 'address_3',
+                'type_reference' => 'type_0', // Légumes
+                'published' => true,
+            ],
         ];
 
-        foreach ($products as $productData) {
+        foreach ($productsData as $data) {
             $product = new Product();
-            $product->setTitle($productData['title']);
-            $product->setDescription($productData['description']);
-            $product->setQuantity($productData['quantity']);
-            $product->setPeremptionDate($productData['peremptionDate']);
-            $product->setPrice($productData['price']);
-            $product->setDonation($productData['donation']);
-            $product->setCollectionDate($productData['collectionDate']);
-            $product->setUser($productData['user']);
-            $product->setType($productData['type']);
-            $product->addDietary($productData['dietetic']);
-            $product->setAddress($productData['address']);
-            $product->setCreatedAt(new DateTime());
-            $product->setUpdatedAt(new DateTime());
+            $product->setTitle($data['title']);
+            $product->setDescription($data['description']);
+            $product->setQuantity($data['quantity']);
+            $product->setPeremptionDate($data['peremptionDate']);
+            $product->setPrice($data['price']);
+            $product->setDonation($data['donation']);
+            $product->setCollectionDate($data['collection_date']);
+            $product->setPublished($data['published']);
+
+            $user = $this->getReference($data['user_reference'], User::class);
+            $product->setUser($user);
+
+            $address = $this->getReference($data['address_reference'], Address::class);
+            $product->setAddress($address);
+
+            $type = $this->getReference($data['type_reference'], Type::class);
+            $product->setType($type);
+
+            // Création du produit Stripe
+            $stripeProduct = $this->stripeService->createProduct($product);
+            $product->setStripeProductId($stripeProduct->id);
+
+            // Création du prix Stripe lié au produit
+            $stripePrice = $this->stripeService->createPrice($product);
+            $product->setStripePriceId($stripePrice->id);
+
             $manager->persist($product);
         }
 
@@ -138,8 +189,8 @@ class ProductFixtures extends Fixture implements DependentFixtureInterface
     {
         return [
             UserFixtures::class,
+            AddressFixtures::class,
             TypeFixtures::class,
-            DietaryFixtures::class,
         ];
     }
 }

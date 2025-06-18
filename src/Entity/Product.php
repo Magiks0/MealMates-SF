@@ -18,11 +18,11 @@ class Product
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups('product:read')]
+    #[Groups(['product:read', 'user:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups('product:read')]
+    #[Groups(['product:read', 'purchase:read'])]
     private ?string $title = null;
 
     #[ORM\Column(length: 255)]
@@ -38,11 +38,11 @@ class Product
     private ?\DateTimeInterface $peremptionDate = null;
 
     #[ORM\Column]
-    #[Groups('product:read')]
+    #[Groups(['product:read', 'purchase:read'])]
     private ?float $price = null;
 
     #[ORM\Column]
-    #[Groups('product:read')]
+    #[Groups(['product:read', 'user:read'])]
     private ?bool $donation = false;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
@@ -50,13 +50,13 @@ class Product
     private ?\DateTimeInterface $collection_date = null;
 
     #[ORM\ManyToOne(inversedBy: 'products')]
-    #[Groups('product:read')]
+    #[Groups('product:read', 'purchase:read')]
     private ?User $user = null;
 
     /**
      * @var Collection<int, File>
      */
-    #[ORM\OneToMany(targetEntity: File::class, mappedBy: 'product')]
+    #[ORM\OneToMany(targetEntity: File::class, mappedBy: 'product', cascade: ['persist'])]
     #[Groups('product:read')]
     private Collection $files;
 
@@ -78,10 +78,26 @@ class Product
     #[Groups('product:read')]
     private $location = null;
 
+    /**
+     * @var Collection<int, Chat>
+     */
+    #[ORM\OneToMany(targetEntity: Chat::class, mappedBy: 'product')]
+    private Collection $chats;
+
+    #[ORM\Column]
+    private ?string $stripeProductId = null;
+
+    #[ORM\Column]
+    private ?string $stripePriceId = null;
+
+    #[ORM\Column]
+    private ?bool $published = true;
+
     public function __construct()
     {
         $this->files = new ArrayCollection();
         $this->dietaries = new ArrayCollection();
+        $this->chats = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -270,5 +286,71 @@ class Product
             return $this->address->getName();
         }
         return null;
+    }
+
+    /**
+     * @return Collection<int, Chat>
+     */
+    public function getChats(): Collection
+    {
+        return $this->chats;
+    }
+
+    public function addChat(Chat $chat): static
+    {
+        if (!$this->chats->contains($chat)) {
+            $this->chats->add($chat);
+            $chat->setProduct($this);
+        }
+
+        return $this;
+    }
+
+    public function removeChat(Chat $chat): static
+    {
+        if ($this->chats->removeElement($chat)) {
+            // set the owning side to null (unless already changed)
+            if ($chat->getProduct() === $this) {
+                $chat->setProduct(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getStripeProductId(): ?string
+    {
+        return $this->stripeProductId;
+    }
+
+    public function setStripeProductId(string $stripeProductId): static
+    {
+        $this->stripeProductId = $stripeProductId;
+
+        return $this;
+    }
+
+    public function getStripePriceId(): ?string
+    {
+        return $this->stripePriceId;
+    }
+
+    public function setStripePriceId(string $stripePriceId): static
+    {
+        $this->stripePriceId = $stripePriceId;
+
+        return $this;
+    }
+
+    public function isPublished(): ?bool
+    {
+        return $this->published;
+    }
+
+    public function setPublished(bool $published): static
+    {
+        $this->published = $published;
+
+        return $this;
     }
 }
