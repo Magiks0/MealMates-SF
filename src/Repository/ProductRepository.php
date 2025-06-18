@@ -31,26 +31,26 @@ class ProductRepository extends ServiceEntityRepository
             $qb
                 ->andWhere('p.price >= :minPrice')
                 ->setParameter('minPrice', $filters['minPrice']);
-        };
+        }
 
         if (!empty($filters['maxPrice'])) {
             $qb
                 ->andWhere('p.price <= :maxPrice')
                 ->setParameter('maxPrice', $filters['maxPrice']);
-        };
+        }
 
         if (!empty($filters['dietary'])) {
             $qb
                 ->join('p.dietaries', 'd')
                 ->andWhere('d.name = :dietetic')
                 ->setParameter('dietetic', $filters['dietetic']);
-        };
+        }
 
         if (!empty($filters['peremptionDate'])) {
             $qb
                 ->andWhere('p.peremptionDate >= :peremptionDate')
                 ->setParameter('peremptionDate', $filters['peremptionDate']);
-        };
+        }
 
         if (!empty($filters['types'])) {
             $typeIds = explode(',', $filters['types']);
@@ -60,11 +60,42 @@ class ProductRepository extends ServiceEntityRepository
                 ->setParameter('types', $typeIds);
         }
 
+        if (!empty($filters['latitude']) && !empty($filters['longitude']) && !empty($filters['radius'])) {
+            return $this->findProductsNearby(
+                $filters['latitude'],
+                $filters['longitude'],
+                $filters['radius']
+            );
+        }
+
         $qb->innerJoin('p.user', 'u')
             ->andWhere('u.id NOT LIKE :userId')
             ->setParameter('userId', $user->getId());
 
         return $qb->orderBy('p.createdAt', 'DESC')->getQuery()->getResult();
+    }
+
+    public function findProductsNearby(float $latitude, float $longitude, float $radius): array
+    {
+        $kmInLat = 0.009; // Environ 1km en latitude
+        $kmInLon = 0.009 / cos(deg2rad($latitude)); // Ajustement pour la longitude basé sur la latitude
+        
+        $latMin = $latitude - ($radius * $kmInLat);
+        $latMax = $latitude + ($radius * $kmInLat);
+        $lonMin = $longitude - ($radius * $kmInLon);
+        $lonMax = $longitude + ($radius * $kmInLon);
+        
+        $qb = $this->createQueryBuilder('p')
+            ->join('p.address', 'a')
+            ->where('a.latitude BETWEEN :latMin AND :latMax')
+            ->andWhere('a.longitude BETWEEN :lonMin AND :lonMax')
+            ->setParameter('latMin', $latMin)
+            ->setParameter('latMax', $latMax)
+            ->setParameter('lonMin', $lonMin)
+            ->setParameter('lonMax', $lonMax)
+            ->orderBy('p.createdAt', 'DESC');
+        
+        return $qb->getQuery()->getResult();
     }
 
     public function findLastChanceProducts(User $user): array
