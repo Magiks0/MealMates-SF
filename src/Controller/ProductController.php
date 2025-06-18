@@ -38,7 +38,7 @@ class ProductController extends AbstractController
         }
         
         $products = $productRepository->findFilteredProducts($filters, $this->security->getUser());
-        
+
         $jsonProducts = $serializer->serialize($products, 'json', ['groups' => 'product:read']);
 
         return new JsonResponse($jsonProducts, Response::HTTP_OK, [], true);
@@ -47,7 +47,6 @@ class ProductController extends AbstractController
     #[Route('/products/nearby', name: 'api_products_nearby', methods: ['GET'])]
     public function getNearbyProducts(SerializerInterface $serializer, ProductRepository $productRepository, Request $request): JsonResponse
     {
-        // Vérifier la présence des paramètres requis
         if (!$request->query->has('latitude') || !$request->query->has('longitude')) {
             return new JsonResponse(['error' => 'Les paramètres latitude et longitude sont requis'], Response::HTTP_BAD_REQUEST);
         }

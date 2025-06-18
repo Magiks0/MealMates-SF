@@ -60,7 +60,6 @@ class ProductRepository extends ServiceEntityRepository
                 ->setParameter('types', $typeIds);
         }
 
-        // Filtrage par coordonnées géographiques
         if (!empty($filters['latitude']) && !empty($filters['longitude']) && !empty($filters['radius'])) {
             return $this->findProductsNearby(
                 $filters['latitude'],
@@ -76,18 +75,8 @@ class ProductRepository extends ServiceEntityRepository
         return $qb->orderBy('p.createdAt', 'DESC')->getQuery()->getResult();
     }
 
-    /**
-     * Trouve les produits à proximité d'un point géographique dans un rayon donné.
-     * Utilise une approximation rectangulaire, adaptée pour des distances courtes (inférieures à 10km).
-     *
-     * @param float $latitude Latitude du point central
-     * @param float $longitude Longitude du point central
-     * @param float $radius Rayon de recherche en kilomètres
-     * @return array Les produits trouvés dans le rayon spécifié
-     */
     public function findProductsNearby(float $latitude, float $longitude, float $radius): array
     {
-        // Conversion approximative des kilomètres en degrés (varie selon la latitude mais c'est une approximation)
         $kmInLat = 0.009; // Environ 1km en latitude
         $kmInLon = 0.009 / cos(deg2rad($latitude)); // Ajustement pour la longitude basé sur la latitude
         
