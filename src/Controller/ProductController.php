@@ -50,7 +50,7 @@ class ProductController extends AbstractController
         if (!$request->query->has('latitude') || !$request->query->has('longitude')) {
             return new JsonResponse(['error' => 'Les paramètres latitude et longitude sont requis'], Response::HTTP_BAD_REQUEST);
         }
-        
+                
         $latitude = (float) $request->query->get('latitude');
         $longitude = (float) $request->query->get('longitude');
         $radius = (float) $request->query->get('radius', 10); // Rayon par défaut de 10 km
@@ -83,15 +83,6 @@ class ProductController extends AbstractController
 
         return new JsonResponse($jsonProducts, Response::HTTP_OK, [], true);
     }
-
-//    #[Route('/product/recommendations', name: 'last_chance', methods: ['GET'])]
-//    public function getRecommendedProducts(SerializerInterface $serializer, ProductRepository $productRepository, Request $request): JsonResponse
-//    {
-//        $products = $productRepository->find();
-//        $jsonProducts = $serializer->serialize($products, 'json', ['groups' => 'product:read']);
-//
-//        return new JsonResponse($jsonProducts, Response::HTTP_OK, [], true);
-//    }
 
     #[Route('/product/recent', name: 'recent_products', methods: ['GET'])]
     public function getRecentProducts(SerializerInterface $serializer, ProductRepository $productRepository): JsonResponse
