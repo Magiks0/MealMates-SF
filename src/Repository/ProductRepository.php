@@ -23,34 +23,38 @@ class ProductRepository extends ServiceEntityRepository
     public function findFilteredProducts(array $filters, User $user)
     {
         $qb = $this
-                ->createQueryBuilder('p')
-                ->where('p.published = true')
-            ;
+            ->createQueryBuilder('p')
+            ->where('p.published = true')
+        ;
 
         if (!empty($filters['minPrice'])) {
             $qb
                 ->andWhere('p.price >= :minPrice')
                 ->setParameter('minPrice', $filters['minPrice']);
-        };
+        }
+        ;
 
         if (!empty($filters['maxPrice'])) {
             $qb
                 ->andWhere('p.price <= :maxPrice')
                 ->setParameter('maxPrice', $filters['maxPrice']);
-        };
+        }
+        ;
 
         if (!empty($filters['dietary'])) {
             $qb
                 ->join('p.dietaries', 'd')
                 ->andWhere('d.name = :dietetic')
                 ->setParameter('dietetic', $filters['dietetic']);
-        };
+        }
+        ;
 
         if (!empty($filters['peremptionDate'])) {
             $qb
                 ->andWhere('p.peremptionDate >= :peremptionDate')
                 ->setParameter('peremptionDate', $filters['peremptionDate']);
-        };
+        }
+        ;
 
         if (!empty($filters['types'])) {
             $typeIds = explode(',', $filters['types']);
@@ -58,6 +62,13 @@ class ProductRepository extends ServiceEntityRepository
                 ->innerJoin('p.type', 't')
                 ->andWhere('t.id IN (:types)')
                 ->setParameter('types', $typeIds);
+        }
+
+        if (!empty($filters['keyword'])) {
+            $kw = trim($filters['keyword']);
+            $qb->andWhere('LOWER(p.title)       LIKE :kw
+                      OR LOWER(p.description) LIKE :kw')
+                ->setParameter('kw', '%' . mb_strtolower($kw) . '%');
         }
 
         $qb->innerJoin('p.user', 'u')
