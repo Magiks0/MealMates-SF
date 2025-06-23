@@ -22,7 +22,6 @@ class ProductRepository extends ServiceEntityRepository
 
     public function findFilteredProducts(array $filters, User $user)
     {
-        dump('test');
         $qb = $this
                 ->createQueryBuilder('p')
                 ->where('p.published = true')
