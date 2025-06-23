@@ -251,7 +251,7 @@ class Product
         return $this->dietaries;
     }
 
-    public function addDietary(self $dietary): static
+    public function addDietary(Dietary $dietary): static
     {
         if (!$this->dietaries->contains($dietary)) {
             $this->dietaries->add($dietary);
@@ -260,7 +260,7 @@ class Product
         return $this;
     }
 
-    public function removeDietary(self $dietary): static
+    public function removeDietary(Dietary $dietary): static
     {
         $this->dietaries->removeElement($dietary);
 
