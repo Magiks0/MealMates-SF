@@ -6,11 +6,13 @@ use App\Entity\Address;
 use App\Entity\File;
 use App\Entity\Product;
 use App\Repository\ProductRepository;
+use App\Repository\TypeRepository;
 use App\Service\StripeService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -77,10 +79,11 @@ class ProductController extends AbstractController
     }
 
     #[Route('/product/new', name: 'product', methods: ['POST'])]
-    public function newProduct(Request $request, EntityManagerInterface $entityManager, StripeService $stripeService, Filesystem $filesystem): JsonResponse
+    public function newProduct(Request $request, EntityManagerInterface $entityManager, StripeService $stripeService, Filesystem $filesystem, TypeRepository $typeRepository): JsonResponse
     {
         try {
             $user = $this->getUser();
+            $type = $request->request->get('type');
             $title = $request->request->get('title');
             $description = $request->request->get('description');
             $quantity = (int)$request->request->get('quantity');
@@ -109,7 +112,13 @@ class ProductController extends AbstractController
                 $product->setPrice($price);
             }
 
+            if (null !== $type) {
+                $linkedType = $typeRepository->findOneBy(['name' => $type]);
+                $product->setType($linkedType);
+            }
+
             $files = $request->files->get('files');
+
             if ($files) {
                 foreach ($files as $file) {
                     try {
@@ -162,7 +171,7 @@ class ProductController extends AbstractController
             $entityManager->persist($product);
             $entityManager->flush();
 
-            return new JsonResponse(['message' => 'Produit créé avec succès'], 201);
+            return new JsonResponse(['message' => 'Produit créé avec succès', 'status' => 'success'], 201);
         } catch (\Exception $e) {
             return new JsonResponse(['error' => 'Une erreur est survenue: ' . $e->getMessage()]);
         }

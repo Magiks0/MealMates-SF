@@ -106,16 +106,17 @@ class AuthController extends AbstractController
             return new JsonResponse(['error' => 'Invalid Google token: email not found'], 400);
         }
         $email = $googleData['email'];
+        $username = $googleData['name'];
 
-        // 2. Chercher si un utilisateur existe déjà avec cet email
         $user = $userRepo->findOneBy(['email' => $email]);
+
         if (!$user) {
-            // Si non, créer un nouvel utilisateur
-            $user = new User();
-            $user->setEmail($email);
-            // On peut définir un mot de passe aléatoire ou une chaîne fixe car ce compte sera géré via SSO
-            $user->setPassword('google'); // Note : ce mot de passe ne sera jamais utilisé
-            $user->setIsVerified(true); // On considère que Google a déjà validé l'email
+            $user = (new User())
+                ->setEmail($email)
+                ->setUsername($username)
+                ->setRoles(['ROLE_USER'])
+                ->setPassword(null)
+                ->setIsVerified(true);
             $em->persist($user);
             $em->flush();
         }
@@ -128,5 +129,4 @@ class AuthController extends AbstractController
             'token' => $token,
         ]);
     }
-
 }

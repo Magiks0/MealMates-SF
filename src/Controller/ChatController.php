@@ -52,6 +52,7 @@ class ChatController extends AbstractController
 
             $messages = $chat->getMessages();
             $lastMessage = null;
+
             if (count($messages) > 0) {
                 $lastMessage = $messages[count($messages) - 1];
             }
@@ -61,14 +62,13 @@ class ChatController extends AbstractController
                 'otherUser' => [
                     'id' => $otherUser->getId(),
                     'username' => $otherUser->getUsername(),
-                    'transactionCount' => 0 // À remplacer par une vraie donnée si disponible
                 ],
                 'lastMessage' => $lastMessage ? [
                     'content' => $lastMessage->getContent(),
                     'createdAt' => $lastMessage->getCreatedAt()->format('Y-m-d H:i:s'),
                     'isFromCurrentUser' => $lastMessage->getAuthor()->getId() === $currentUser->getId()
                 ] : null,
-                'updatedAt' => $chat->getUpdatedAt()->format('Y-m-d H:i:s')
+                'updatedAt' => $chat->getUpdatedAt()->format('Y-m-d H:i:s'),
             ];
         }
 
@@ -118,7 +118,12 @@ class ChatController extends AbstractController
             'productId' => $chat->getProduct()->getId(),
             'productName' => $chat->getProduct()->getTitle(),
             'productPrice' => $chat->getProduct()->getPrice(),
-            'productFile' => '$chat->getProduct()->getFiles()[0]->getPath()'
+            'productFile' => $chat->getProduct()->getFiles()[0]?->getPath(),
+            'linkedOrder' => $currentUser !== $chat->getProduct()->getUser() ? null :[
+                'buyer' => $chat->getUser1()?->getUsername(),
+                'qrToken' => $chat->getLinkedOrder()?->getQrCodeToken(),
+                'status' => $chat->getLinkedOrder()?->getStatus(),
+            ],
         ];
 
         return $this->json($result);
@@ -173,7 +178,6 @@ class ChatController extends AbstractController
             return $this->json(['message' => 'Chat non trouvé'], Response::HTTP_NOT_FOUND);
         }
 
-        // Vérifier que l'utilisateur fait partie de cette conversation
         if ($chat->getUser1()->getId() !== $currentUser->getId() && $chat->getUser2()->getId() !== $currentUser->getId()) {
             return $this->json(['message' => 'Accès refusé'], Response::HTTP_FORBIDDEN);
         }
@@ -183,20 +187,15 @@ class ChatController extends AbstractController
             return $this->json(['message' => 'Le contenu du message est requis'], Response::HTTP_BAD_REQUEST);
         }
 
-        // Déterminer le destinataire
         $recipient = $chat->getUser1()->getId() === $currentUser->getId()
             ? $chat->getUser2()
             : $chat->getUser1();
 
-        // Créer le nouveau message
         $message = new Message();
         $message->setContent($data['content']);
         $message->setAuthor($currentUser);
         $message->setRecipient($recipient);
         $message->setChat($chat);
-
-        // Mettre à jour le timestamp du chat
-        $chat->setUpdatedAt(new \DateTime());
 
         $this->entityManager->persist($message);
         $this->entityManager->flush();
@@ -235,11 +234,9 @@ class ChatController extends AbstractController
             return $this->json(['message' => 'Le message ne peut pas être vide'], Response::HTTP_BAD_REQUEST);
         }
 
-        // Vérifie si une conversation existe déjà
         $productId = $data['productId'];
         $existingChat = $chatRepository->findChatBetweenUsersAndProduct($currentUser->getId(), $userId, $productId);
         if ($existingChat) {
-            // Ajouter le message à la conversation existante
             $message = new Message();
             $message->setChat($existingChat);
             $message->setAuthor($currentUser);
