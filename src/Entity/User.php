@@ -16,7 +16,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['user:read', 'product:read'])]
+    #[Groups(['user:read', 'product:read', 'order:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 180, unique: true)]
@@ -26,7 +26,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private array $roles = [];
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $password = null;
 
     #[ORM\Column]
@@ -74,6 +74,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->chats = new ArrayCollection();
         $this->products = new ArrayCollection();
         $this->purchases = new ArrayCollection();
+        $this->orders = new ArrayCollection();
     }
 
     /**
@@ -89,10 +90,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private Collection $chats;
 
     /**
-     * @var Collection<int, Purchase>
+     * @var Collection<int, Order>
      */
-    #[ORM\OneToMany(targetEntity: Purchase::class, mappedBy: 'buyer')]
-    private Collection $purchases;
+    #[ORM\OneToMany(targetEntity: Order::class, mappedBy: 'buyer')]
+    private Collection $orders;
 
     public function getId(): ?int
     {
@@ -126,7 +127,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->password;
     }
 
-    public function setPassword(string $password): static
+    public function setPassword(?string $password): static
     {
         $this->password = $password;
         return $this;
@@ -375,30 +376,42 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    /**
-     * @return Collection<int, Purchase>
-     */
-    public function getPurchases(): Collection
-    {
-        return $this->purchases;
-    }
-
-    public function addPurchase(Purchase $purchase): static
-    {
-        if (!$this->purchases->contains($purchase)) {
-            $this->purchases->add($purchase);
-            $purchase->setSeller($this);
-        }
-
-        return $this;
-    }
-
     public function removePurchase(Purchase $purchase): static
     {
         if ($this->purchases->removeElement($purchase)) {
             // set the owning side to null (unless already changed)
             if ($purchase->getSeller() === $this) {
                 $purchase->setSeller(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Order>
+     */
+    public function getOrders(): Collection
+    {
+        return $this->orders;
+    }
+
+    public function addOrder(Order $order): static
+    {
+        if (!$this->orders->contains($order)) {
+            $this->orders->add($order);
+            $order->setBuyer($this);
+        }
+
+        return $this;
+    }
+
+    public function removeOrder(Order $order): static
+    {
+        if ($this->orders->removeElement($order)) {
+            // set the owning side to null (unless already changed)
+            if ($order->getBuyer() === $this) {
+                $order->setBuyer(null);
             }
         }
 
