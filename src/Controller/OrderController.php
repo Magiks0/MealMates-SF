@@ -12,7 +12,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Uid\Uuid;
 
@@ -32,13 +32,13 @@ class OrderController extends AbstractController
         return new JsonResponse($jsonOrder, Response::HTTP_OK, [], true);
     }
 
-    #[Route('/orders/{userId}/{token}', name: 'purchase', methods: ['GET'])]
+    #[Route('/orders/{userId}/{token}', name: 'purchase_by_usr_and_token', methods: ['GET'])]
     public function getByTokenAndUser(int $userId, string $token, OrderRepository $orderRepository, UserRepository $userRepository, SerializerInterface $serializer): JsonResponse
     {
         $buyer = $userRepository->find($userId);
         $order = $orderRepository->findByBuyerAndToken($buyer, $token);
 
-        //If order is not found, that means wrong token or not the buyer we refuse the access
+        // If order is not found, that means wrong token or not the buyer so we refuse the access
         if (null === $order) {
             return new JsonResponse(null, Response::HTTP_NOT_FOUND);
         } else {
@@ -49,10 +49,18 @@ class OrderController extends AbstractController
         return new JsonResponse($jsonOrder, Response::HTTP_OK, [], true);
     }
 
-    #[Route('/orders/validate-pickup/{qrCodeToken}', name: 'orders', methods: ['GET'])]
-    public function validatePickup(string $qrCodeToken): JsonResponse
+    #[Route('/order/validate-pickup/{qrCodeToken}', name: 'orders', methods: ['GET'])]
+    public function validatePickup(string $qrCodeToken, OrderRepository $orderRepository): JsonResponse
     {
+        $order = $orderRepository->findOneBy(['qrCodeToken' => $qrCodeToken]);
 
-        return new JsonResponse('success');
+        try {
+            $order->setStatus(Order::STATUS_COMPLETED);
+            $this->entityManager->flush();
+        } catch (\Exception $e){
+            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        return new JsonResponse(null, Response::HTTP_OK);
     }
 }

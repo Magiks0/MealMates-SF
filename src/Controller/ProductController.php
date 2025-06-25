@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Address;
 use App\Entity\File;
 use App\Entity\Product;
+use App\Repository\OrderRepository;
 use App\Repository\ProductRepository;
 use App\Repository\TypeRepository;
 use App\Service\StripeService;
@@ -38,7 +39,7 @@ class ProductController extends AbstractController
     }
 
     #[Route('/products/{id}', name: 'api_product_show', methods: ['GET'])]
-    public function getProduct(int|string $id, SerializerInterface $serializer, ProductRepository $productRepository): JsonResponse
+    public function getProduct(int|string $id, SerializerInterface $serializer, ProductRepository $productRepository, OrderRepository $orderRepository): JsonResponse
     {
         $product = $productRepository->find($id);
 
@@ -46,9 +47,14 @@ class ProductController extends AbstractController
             return new JsonResponse(['message' => 'Produit non trouvé'], Response::HTTP_NOT_FOUND);
         }
 
-        $jsonProduct = $serializer->serialize($product, 'json', ['groups' => 'product:read']);
+        $bought = null === $orderRepository->findOneBy(['product' => $product]);
 
-        return new JsonResponse($jsonProduct, Response::HTTP_OK, [], true);
+        $productArray = $serializer->normalize($product, 'json', ['groups' => 'product:read']);
+        $productArray['isBought'] = $bought;
+
+        $jsonResponse = $serializer->serialize($productArray, 'json');
+
+        return new JsonResponse($jsonResponse, Response::HTTP_OK, [], true);
     }
 
     #[Route('/product/last-chance', name: 'last_chance', methods: ['GET'])]
