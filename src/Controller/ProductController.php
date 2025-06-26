@@ -50,7 +50,7 @@ class ProductController extends AbstractController
         if (!$request->query->has('latitude') || !$request->query->has('longitude')) {
             return new JsonResponse(['error' => 'Les paramètres latitude et longitude sont requis'], Response::HTTP_BAD_REQUEST);
         }
-        
+                
         $latitude = (float) $request->query->get('latitude');
         $longitude = (float) $request->query->get('longitude');
         $radius = (float) $request->query->get('radius', 10); // Rayon par défaut de 10 km
@@ -84,15 +84,6 @@ class ProductController extends AbstractController
         return new JsonResponse($jsonProducts, Response::HTTP_OK, [], true);
     }
 
-//    #[Route('/product/recommendations', name: 'last_chance', methods: ['GET'])]
-//    public function getRecommendedProducts(SerializerInterface $serializer, ProductRepository $productRepository, Request $request): JsonResponse
-//    {
-//        $products = $productRepository->find();
-//        $jsonProducts = $serializer->serialize($products, 'json', ['groups' => 'product:read']);
-//
-//        return new JsonResponse($jsonProducts, Response::HTTP_OK, [], true);
-//    }
-
     #[Route('/product/recent', name: 'recent_products', methods: ['GET'])]
     public function getRecentProducts(SerializerInterface $serializer, ProductRepository $productRepository): JsonResponse
     {
@@ -113,6 +104,11 @@ class ProductController extends AbstractController
             $peremptionDate = new \DateTime($request->request->get('peremptionDate'));
             $price = (float)$request->request->get('price');
             $donation = filter_var($request->request->get('donation'), FILTER_VALIDATE_BOOLEAN);
+            $locationData = $request->request->get('location');
+            
+            if (!$locationData || !isset($locationData['address']) || !isset($locationData['coordinates'])) {
+                return new JsonResponse(['error' => 'Données de localisation invalides'], 400);
+            }
 
             if ($price === 0) {
                 $donation = true;
@@ -170,14 +166,18 @@ class ProductController extends AbstractController
                 }
             }
 
-            $adress = new Address();
-            $adress
-                ->setName('9 rue de Janville, 60250 MOUY')
-                ->setLatitude('19.132414')
-                ->setLongitude('34.3454535');
+            $address = new Address();
+            $address
+                ->setName($locationData['address'])
+                ->setLatitude((float)$locationData['coordinates']['lat'])
+                ->setLongitude((float)$locationData['coordinates']['lng']);
+            
 
-            $entityManager->persist($adress);
-            $product->setAddress($adress);
+            $entityManager->persist($address);
+            $product->setAddress($address);
+            
+            $product->setCreatedAt(new \DateTime());
+            $product->setUpdatedAt(new \DateTime());
 
             $stripeProduct = $stripeService->createProduct($product);
             $product->setStripeProductId($stripeProduct->id);
