@@ -113,8 +113,9 @@ class ProductController extends AbstractController
             $peremptionDate = new \DateTime($request->request->get('peremptionDate'));
             $price = (float)$request->request->get('price');
             $donation = filter_var($request->request->get('donation'), FILTER_VALIDATE_BOOLEAN);
-            $locationData = $request->request->get('location');
-            
+            $locationJson = $request->request->get('location');
+            $locationData = json_decode($locationJson, true);
+
             if (!$locationData || !isset($locationData['address']) || !isset($locationData['coordinates'])) {
                 return new JsonResponse(['error' => 'Données de localisation invalides'], 400);
             }
@@ -186,7 +187,6 @@ class ProductController extends AbstractController
                 ->setName($locationData['address'])
                 ->setLatitude((float)$locationData['coordinates']['lat'])
                 ->setLongitude((float)$locationData['coordinates']['lng']);
-            
 
             $entityManager->persist($address);
             $product->setAddress($address);
