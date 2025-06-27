@@ -148,4 +148,14 @@ class ProductRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    public function findByUser(User $user): array
+    {
+        return $this->createQueryBuilder('p')
+            ->where('p.user = :user')
+            ->setParameter('user', $user)
+            ->orderBy('p.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
 }
