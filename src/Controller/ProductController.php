@@ -5,12 +5,15 @@ namespace App\Controller;
 use App\Entity\Address;
 use App\Entity\File;
 use App\Entity\Product;
+use App\Repository\OrderRepository;
 use App\Repository\ProductRepository;
+use App\Repository\TypeRepository;
 use App\Service\StripeService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -62,7 +65,7 @@ class ProductController extends AbstractController
     }
 
     #[Route('/products/{id}', name: 'api_product_show', methods: ['GET'])]
-    public function getProduct(int|string $id, SerializerInterface $serializer, ProductRepository $productRepository): JsonResponse
+    public function getProduct(int|string $id, SerializerInterface $serializer, ProductRepository $productRepository, OrderRepository $orderRepository): JsonResponse
     {
         $product = $productRepository->find($id);
         
@@ -70,9 +73,14 @@ class ProductController extends AbstractController
             return new JsonResponse(['message' => 'Produit non trouvé'], Response::HTTP_NOT_FOUND);
         }
 
-        $jsonProduct = $serializer->serialize($product, 'json', ['groups' => 'product:read']);
+        $bought = null === $orderRepository->findOneBy(['product' => $product]);
 
-        return new JsonResponse($jsonProduct, Response::HTTP_OK, [], true);
+        $productArray = $serializer->normalize($product, 'json', ['groups' => 'product:read']);
+        $productArray['isBought'] = $bought;
+
+        $jsonResponse = $serializer->serialize($productArray, 'json');
+
+        return new JsonResponse($jsonResponse, Response::HTTP_OK, [], true);
     }
 
     #[Route('/product/last-chance', name: 'last_chance', methods: ['GET'])]
@@ -94,10 +102,11 @@ class ProductController extends AbstractController
     }
 
     #[Route('/product/new', name: 'product', methods: ['POST'])]
-    public function newProduct(Request $request, EntityManagerInterface $entityManager, StripeService $stripeService, Filesystem $filesystem): JsonResponse
+    public function newProduct(Request $request, EntityManagerInterface $entityManager, StripeService $stripeService, Filesystem $filesystem, TypeRepository $typeRepository): JsonResponse
     {
         try {
             $user = $this->getUser();
+            $type = $request->request->get('type');
             $title = $request->request->get('title');
             $description = $request->request->get('description');
             $quantity = (int)$request->request->get('quantity');
@@ -131,7 +140,13 @@ class ProductController extends AbstractController
                 $product->setPrice($price);
             }
 
+            if (null !== $type) {
+                $linkedType = $typeRepository->findOneBy(['name' => $type]);
+                $product->setType($linkedType);
+            }
+
             $files = $request->files->get('files');
+
             if ($files) {
                 foreach ($files as $file) {
                     try {
@@ -188,7 +203,7 @@ class ProductController extends AbstractController
             $entityManager->persist($product);
             $entityManager->flush();
 
-            return new JsonResponse(['message' => 'Produit créé avec succès'], 201);
+            return new JsonResponse(['message' => 'Produit créé avec succès', 'status' => 'success'], 201);
         } catch (\Exception $e) {
             return new JsonResponse(['error' => 'Une erreur est survenue: ' . $e->getMessage()]);
         }
