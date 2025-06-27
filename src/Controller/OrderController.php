@@ -63,4 +63,23 @@ class OrderController extends AbstractController
 
         return new JsonResponse(null, Response::HTTP_OK);
     }
+
+     #[Route('/my-orders', name: 'my_orders', methods: ['GET'])]
+    public function getMyPurchases(OrderRepository $orderRepository, SerializerInterface $serializer): JsonResponse
+    {
+        $user = $this->getUser();
+        
+        if (!$user) {
+            return new JsonResponse(['message' => 'Utilisateur non connecté'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $orders = $orderRepository->findBy(
+            ['buyer' => $user],
+            ['id' => 'DESC'],
+        );
+
+        $jsonOrders = $serializer->serialize($orders, 'json', ['groups' => 'order:read']);
+
+        return new JsonResponse($jsonOrders, Response::HTTP_OK, [], true);
+    }
 }

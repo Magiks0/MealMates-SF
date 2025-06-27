@@ -18,7 +18,7 @@ class Product
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['product:read', 'user:read'])]
+    #[Groups(['product:read', 'user:read', 'order:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
@@ -72,7 +72,7 @@ class Product
     private Collection $dietaries;
 
     #[ORM\ManyToOne(inversedBy: 'products')]
-    #[Groups('product:read')]
+    #[Groups(['product:read', 'order:read'])]
     private ?Address $address = null;
 
     #[Groups('product:read')]
