@@ -208,4 +208,19 @@ class ProductController extends AbstractController
             return new JsonResponse(['error' => 'Une erreur est survenue: ' . $e->getMessage()]);
         }
     }
+
+    #[Route('/product/my-ads', name: 'user_products', methods: ['GET'])]
+    public function getUserProducts(SerializerInterface $serializer, ProductRepository $productRepository): JsonResponse
+    {
+        $user = $this->getUser();
+        
+        if (!$user) {
+            return new JsonResponse(['error' => 'User not authenticated'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $products = $productRepository->findByUser($user);
+        $jsonProducts = $serializer->serialize($products, 'json', ['groups' => 'product:read']);
+
+        return new JsonResponse($jsonProducts, Response::HTTP_OK, [], true);
+    }
 }
