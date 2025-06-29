@@ -3,6 +3,8 @@
 namespace App\Repository;
 
 use App\Entity\Chat;
+use App\Entity\Product;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 

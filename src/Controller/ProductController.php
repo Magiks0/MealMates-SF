@@ -5,12 +5,15 @@ namespace App\Controller;
 use App\Entity\Address;
 use App\Entity\File;
 use App\Entity\Product;
+use App\Repository\OrderRepository;
 use App\Repository\ProductRepository;
+use App\Repository\TypeRepository;
 use App\Service\StripeService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -50,7 +53,7 @@ class ProductController extends AbstractController
         if (!$request->query->has('latitude') || !$request->query->has('longitude')) {
             return new JsonResponse(['error' => 'Les paramètres latitude et longitude sont requis'], Response::HTTP_BAD_REQUEST);
         }
-        
+                
         $latitude = (float) $request->query->get('latitude');
         $longitude = (float) $request->query->get('longitude');
         $radius = (float) $request->query->get('radius', 10); // Rayon par défaut de 10 km
@@ -62,7 +65,7 @@ class ProductController extends AbstractController
     }
 
     #[Route('/products/{id}', name: 'api_product_show', methods: ['GET'])]
-    public function getProduct(int|string $id, SerializerInterface $serializer, ProductRepository $productRepository): JsonResponse
+    public function getProduct(int|string $id, SerializerInterface $serializer, ProductRepository $productRepository, OrderRepository $orderRepository): JsonResponse
     {
         $product = $productRepository->find($id);
         
@@ -70,9 +73,14 @@ class ProductController extends AbstractController
             return new JsonResponse(['message' => 'Produit non trouvé'], Response::HTTP_NOT_FOUND);
         }
 
-        $jsonProduct = $serializer->serialize($product, 'json', ['groups' => 'product:read']);
+        $bought = null === $orderRepository->findOneBy(['product' => $product]);
 
-        return new JsonResponse($jsonProduct, Response::HTTP_OK, [], true);
+        $productArray = $serializer->normalize($product, 'json', ['groups' => 'product:read']);
+        $productArray['isBought'] = $bought;
+
+        $jsonResponse = $serializer->serialize($productArray, 'json');
+
+        return new JsonResponse($jsonResponse, Response::HTTP_OK, [], true);
     }
 
     #[Route('/product/last-chance', name: 'last_chance', methods: ['GET'])]
@@ -84,15 +92,6 @@ class ProductController extends AbstractController
         return new JsonResponse($jsonProducts, Response::HTTP_OK, [], true);
     }
 
-//    #[Route('/product/recommendations', name: 'last_chance', methods: ['GET'])]
-//    public function getRecommendedProducts(SerializerInterface $serializer, ProductRepository $productRepository, Request $request): JsonResponse
-//    {
-//        $products = $productRepository->find();
-//        $jsonProducts = $serializer->serialize($products, 'json', ['groups' => 'product:read']);
-//
-//        return new JsonResponse($jsonProducts, Response::HTTP_OK, [], true);
-//    }
-
     #[Route('/product/recent', name: 'recent_products', methods: ['GET'])]
     public function getRecentProducts(SerializerInterface $serializer, ProductRepository $productRepository): JsonResponse
     {
@@ -103,16 +102,23 @@ class ProductController extends AbstractController
     }
 
     #[Route('/product/new', name: 'product', methods: ['POST'])]
-    public function newProduct(Request $request, EntityManagerInterface $entityManager, StripeService $stripeService, Filesystem $filesystem): JsonResponse
+    public function newProduct(Request $request, EntityManagerInterface $entityManager, StripeService $stripeService, Filesystem $filesystem, TypeRepository $typeRepository): JsonResponse
     {
         try {
             $user = $this->getUser();
+            $type = $request->request->get('type');
             $title = $request->request->get('title');
             $description = $request->request->get('description');
             $quantity = (int)$request->request->get('quantity');
             $peremptionDate = new \DateTime($request->request->get('peremptionDate'));
             $price = (float)$request->request->get('price');
             $donation = filter_var($request->request->get('donation'), FILTER_VALIDATE_BOOLEAN);
+            $locationJson = $request->request->get('location');
+            $locationData = json_decode($locationJson, true);
+
+            if (!$locationData || !isset($locationData['address']) || !isset($locationData['coordinates'])) {
+                return new JsonResponse(['error' => 'Données de localisation invalides'], 400);
+            }
 
             if ($price === 0) {
                 $donation = true;
@@ -135,7 +141,13 @@ class ProductController extends AbstractController
                 $product->setPrice($price);
             }
 
+            if (null !== $type) {
+                $linkedType = $typeRepository->findOneBy(['name' => $type]);
+                $product->setType($linkedType);
+            }
+
             $files = $request->files->get('files');
+
             if ($files) {
                 foreach ($files as $file) {
                     try {
@@ -170,14 +182,17 @@ class ProductController extends AbstractController
                 }
             }
 
-            $adress = new Address();
-            $adress
-                ->setName('9 rue de Janville, 60250 MOUY')
-                ->setLatitude('19.132414')
-                ->setLongitude('34.3454535');
+            $address = new Address();
+            $address
+                ->setName($locationData['address'])
+                ->setLatitude((float)$locationData['coordinates']['lat'])
+                ->setLongitude((float)$locationData['coordinates']['lng']);
 
-            $entityManager->persist($adress);
-            $product->setAddress($adress);
+            $entityManager->persist($address);
+            $product->setAddress($address);
+            
+            $product->setCreatedAt(new \DateTime());
+            $product->setUpdatedAt(new \DateTime());
 
             $stripeProduct = $stripeService->createProduct($product);
             $product->setStripeProductId($stripeProduct->id);
@@ -188,9 +203,24 @@ class ProductController extends AbstractController
             $entityManager->persist($product);
             $entityManager->flush();
 
-            return new JsonResponse(['message' => 'Produit créé avec succès'], 201);
+            return new JsonResponse(['message' => 'Produit créé avec succès', 'status' => 'success'], 201);
         } catch (\Exception $e) {
             return new JsonResponse(['error' => 'Une erreur est survenue: ' . $e->getMessage()]);
         }
+    }
+
+    #[Route('/product/my-ads', name: 'user_products', methods: ['GET'])]
+    public function getUserProducts(SerializerInterface $serializer, ProductRepository $productRepository): JsonResponse
+    {
+        $user = $this->getUser();
+        
+        if (!$user) {
+            return new JsonResponse(['error' => 'User not authenticated'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $products = $productRepository->findByUser($user);
+        $jsonProducts = $serializer->serialize($products, 'json', ['groups' => 'product:read']);
+
+        return new JsonResponse($jsonProducts, Response::HTTP_OK, [], true);
     }
 }
