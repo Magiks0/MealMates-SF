@@ -68,6 +68,13 @@ class ProductRepository extends ServiceEntityRepository
             );
         }
 
+        if ($user) {
+            $qb->leftJoin('App\Entity\FavoriteProduct', 'fav', 'WITH', 'fav.product = p AND fav.user = :currentUser')
+                ->setParameter('currentUser', $user)
+                ->addSelect('CASE WHEN fav.id IS NOT NULL THEN true ELSE false END as HIDDEN isFavorite');
+        }
+
+
         $qb->innerJoin('p.user', 'u')
             ->andWhere('u.id NOT LIKE :userId')
             ->setParameter('userId', $user->getId());
