@@ -291,7 +291,7 @@ class ChatController extends AbstractController
         }
 
         $product = $productRepository->find($productId);
-        $chat = $chatRepository->findChatBetweenUsersAndProduct($product->getUser()->getId(),$userId, $productId);
+        $chat = $chatRepository->findChatBetweenUsersAndProduct($userId, $product->getUser()->getId(), $productId);
 
         if ($chat) {
             return $this->json([

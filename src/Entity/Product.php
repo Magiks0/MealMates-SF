@@ -72,7 +72,7 @@ class Product
     private Collection $dietaries;
 
     #[ORM\ManyToOne(inversedBy: 'products')]
-    #[Groups('product:read')]
+    #[Groups(['product:read', 'order:read'])]
     private ?Address $address = null;
 
     #[Groups('product:read')]

@@ -17,7 +17,7 @@ class Chat
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups('chat:read')]
+    #[Groups(['order:read', 'chat:read'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'chats')]

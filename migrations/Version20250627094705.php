@@ -10,7 +10,7 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * Auto-generated Migration: Please modify to your needs!
  */
-final class Version20250619144208 extends AbstractMigration
+final class Version20250627094705 extends AbstractMigration
 {
     public function getDescription(): string
     {
@@ -21,7 +21,7 @@ final class Version20250619144208 extends AbstractMigration
     {
         // this up() migration is auto-generated, please modify it to your needs
         $this->addSql(<<<'SQL'
-            ALTER TABLE user CHANGE password password VARCHAR(255) DEFAULT NULL
+            ALTER TABLE `order` DROP status
         SQL);
     }
 
@@ -29,7 +29,7 @@ final class Version20250619144208 extends AbstractMigration
     {
         // this down() migration is auto-generated, please modify it to your needs
         $this->addSql(<<<'SQL'
-            ALTER TABLE user CHANGE password password VARCHAR(255) NOT NULL
+            ALTER TABLE `order` ADD status VARCHAR(255) NOT NULL
         SQL);
     }
 }

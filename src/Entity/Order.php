@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Entity\Traits\TimestampableTrait;
 use App\Repository\OrderRepository;
 use Doctrine\ORM\Mapping as ORM;
+use App\Enum\PurchaseStatus;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: OrderRepository::class)]
@@ -12,13 +13,6 @@ use Symfony\Component\Serializer\Attribute\Groups;
 class  Order
 {
     use TimestampableTrait;
-
-    public const STATUS_RESERVED = 'reserved';
-    public const STATUS_PAID = 'paid';
-    public const STATUS_CANCELLED = 'cancelled';
-    public const STATUS_AWAITING_PICKUP = 'awaiting_pickup';
-    public const STATUS_PICKED_UP = 'picked_up';
-    public const STATUS_COMPLETED = 'completed';
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -38,13 +32,18 @@ class  Order
     #[Groups(['order:read'])]
     private ?Product $product = null;
 
-    #[ORM\Column(length: 255)]
-    #[Groups(['order:read'])]
-    private ?string $status = null;
+    // #[ORM\Column(length: 255)]
+    // #[Groups(['order:read'])]
+    // private ?string $status = null;
 
     #[ORM\Column(length: 255, nullable: true, unique: true)]
     #[Groups(['order:read'])]
     private ?string $qrCodeToken = null;
+
+    #[ORM\Column(type: 'string', enumType: PurchaseStatus::class)]
+    #[Groups(['order:read'])]
+    private PurchaseStatus $purchaseStatus;
+
 
     public function getId(): ?int
     {
@@ -87,17 +86,17 @@ class  Order
         return $this;
     }
 
-    public function getStatus(): ?string
+    public function getStatus(): PurchaseStatus
     {
-        return $this->status;
+        return $this->purchaseStatus;
     }
 
-    public function setStatus(string $status): static
+    public function setStatus(PurchaseStatus $purchaseStatus): static
     {
-        $this->status = $status;
-
+        $this->purchaseStatus = $purchaseStatus;
         return $this;
     }
+
 
     public function getQrCodeToken(): ?string
     {
