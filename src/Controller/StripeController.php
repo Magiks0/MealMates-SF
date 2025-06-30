@@ -2,8 +2,10 @@
 
     namespace App\Controller;
 
+    use App\Entity\Chat;
+    use App\Entity\Order;
     use App\Entity\Product;
-    use App\Entity\Purchase;
+    use App\Repository\ChatRepository;
     use App\Repository\ProductRepository;
     use App\Repository\UserRepository;
     use App\Service\StripeService;
@@ -12,11 +14,11 @@
     use Stripe\Exception\ApiErrorException;
     use Stripe\Stripe;
     use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-    use Symfony\Bundle\SecurityBundle\Security;
     use Symfony\Component\HttpFoundation\JsonResponse;
     use Symfony\Component\HttpFoundation\Request;
     use Symfony\Component\HttpFoundation\Response;
     use Symfony\Component\Routing\Attribute\Route;
+    use Symfony\Component\Uid\Uuid;
 
     class StripeController extends AbstractController
     {
@@ -33,7 +35,7 @@
          * @throws ApiErrorException
          */
         #[Route('/stripe/success', name: 'stripe_success', methods: ['GET'])]
-        public function stripeSuccess(Request $request, ProductRepository $productRepo, UserRepository $userRepository): Response
+        public function stripeSuccess(Request $request, ProductRepository $productRepo, UserRepository $userRepository, ChatRepository $chatRepository): Response
         {
             $sessionId = $request->query->get('session_id');
 
@@ -52,15 +54,30 @@
 
             $product->setPublished(false);
 
-            $purchase = new Purchase();
-            $purchase->setProduct($product);
-            $purchase->setBuyer($user);
-            $purchase->setSeller($product->getUser());
+            $order = (new Order())
+                ->setProduct($product)
+                ->setBuyer($user)
+                ->setStatus(Order::STATUS_AWAITING_PICKUP)
+                ->setQrCodeToken(Uuid::v4())
+                ->setSeller($product->getUser());
 
-            $this->entityManager->persist($purchase);
+            $chat = $chatRepository->findChatBetweenUsersAndProduct($user->getId(), $product->getUser()->getId(), $product->getId());
+
+            if (!$chat) {
+                $chat = (new Chat())
+                    ->setProduct($product)
+                    ->setBuyer($user)
+                    ->setSeller($product->getUser())
+                    ->setLinkedOrder($order);
+
+                $this->entityManager->persist($chat);
+            }
+
+            $chat?->setLinkedOrder($order);
+
+            $this->entityManager->persist($order);
             $this->entityManager->flush();
 
-            // Redirection vers React
-            return $this->redirect($_ENV['FRONT_DOMAIN'].'/checkout/success/' . $purchase->getId());
+            return $this->redirect($_ENV['FRONT_DOMAIN'].'/checkout/success/' . $order->getId());
         }
     }

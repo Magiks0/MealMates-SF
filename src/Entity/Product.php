@@ -18,11 +18,11 @@ class Product
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['product:read', 'user:read'])]
+    #[Groups(['product:read', 'user:read', 'order:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['product:read', 'purchase:read'])]
+    #[Groups(['product:read', 'order:read'])]
     private ?string $title = null;
 
     #[ORM\Column(length: 255)]
@@ -38,7 +38,7 @@ class Product
     private ?\DateTimeInterface $peremptionDate = null;
 
     #[ORM\Column]
-    #[Groups(['product:read', 'purchase:read'])]
+    #[Groups(['product:read', 'order:read'])]
     private ?float $price = null;
 
     #[ORM\Column]
@@ -50,7 +50,7 @@ class Product
     private ?\DateTimeInterface $collection_date = null;
 
     #[ORM\ManyToOne(inversedBy: 'products')]
-    #[Groups('product:read', 'purchase:read')]
+    #[Groups('product:read', 'order:read')]
     private ?User $user = null;
 
     /**

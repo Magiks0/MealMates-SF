@@ -3,6 +3,8 @@
 namespace App\Repository;
 
 use App\Entity\Chat;
+use App\Entity\Product;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -19,22 +21,22 @@ class ChatRepository extends ServiceEntityRepository
     public function findChatsForUser(int $userId): array
     {
         return $this->createQueryBuilder('c')
-            ->where('c.user1 = :userId')
-            ->orWhere('c.user2 = :userId')
+            ->where('c.buyer = :userId')
+            ->orWhere('c.seller = :userId')
             ->setParameter('userId', $userId)
             ->orderBy('c.updatedAt', 'DESC')
             ->getQuery()
             ->getResult();
     }
 
-    public function findChatBetweenUsersAndProduct(int $user1Id, int $user2Id, int $productId): ?Chat
+    public function findChatBetweenUsersAndProduct(int $buyerId, int $sellerId, int $productId): ?Chat
     {
         return $this->createQueryBuilder('c')
-            ->where('(c.user1 = :user1Id AND c.user2 = :user2Id)')
-            ->orWhere('(c.user1 = :user2Id AND c.user2 = :user1Id)')
+            ->where('(c.buyer = :buyerId AND c.seller = :sellerId)')
+            ->orWhere('(c.buyer = :buyerId AND c.seller = :sellerId)')
             ->andWhere('c.product = :productId')
-            ->setParameter('user1Id', $user1Id)
-            ->setParameter('user2Id', $user2Id)
+            ->setParameter('buyerId', $buyerId)
+            ->setParameter('sellerId', $sellerId)
             ->setParameter('productId', $productId)
             ->getQuery()
             ->getOneOrNullResult();
