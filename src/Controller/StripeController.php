@@ -6,6 +6,7 @@
     use App\Entity\Order;
     use App\Entity\Product;
     use App\Repository\ChatRepository;
+    use App\Enum\PurchaseStatus;
     use App\Repository\ProductRepository;
     use App\Repository\UserRepository;
     use App\Service\StripeService;
@@ -57,7 +58,7 @@
             $order = (new Order())
                 ->setProduct($product)
                 ->setBuyer($user)
-                ->setStatus(Order::STATUS_AWAITING_PICKUP)
+                ->setStatus(PurchaseStatus::PENDING)
                 ->setQrCodeToken(Uuid::v4())
                 ->setSeller($product->getUser());
 
