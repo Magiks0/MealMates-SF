@@ -1,0 +1,21 @@
+# config/packages/scheduler.yaml
+framework:
+  scheduler:
+    enabled: true
+
+  messenger:
+    transports:
+      # Transport pour les tâches planifiées
+      scheduler_default:
+        dsn: "%env(SCHEDULER_TRANSPORT_DSN)%"
+        options:
+          # Retry configuration pour les échecs
+          retry_strategy:
+            max_retries: 3
+            delay: 1000
+            multiplier: 2
+            max_delay: 10000
+
+    routing:
+      # Router le message de vérification d'expiration
+      'App\Scheduler\Message\CheckProductExpirationMessage': scheduler_default
