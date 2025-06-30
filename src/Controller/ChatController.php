@@ -46,9 +46,9 @@ class ChatController extends AbstractController
 
         $formattedChats = [];
         foreach ($chats as $chat) {
-            $otherUser = $chat->getUser1()->getId() === $currentUser->getId()
-                ? $chat->getUser2()
-                : $chat->getUser1();
+            $otherUser = $chat->getBuyer()->getId() === $currentUser->getId()
+                ? $chat->getSeller()
+                : $chat->getBuyer();
 
             $messages = $chat->getMessages();
             $lastMessage = null;
@@ -88,13 +88,13 @@ class ChatController extends AbstractController
             return $this->json(['message' => 'Chat non trouvé'], Response::HTTP_NOT_FOUND);
         }
 
-        if ($chat->getUser1()->getId() !== $currentUser->getId() && $chat->getUser2()->getId() !== $currentUser->getId()) {
+        if ($chat->getBuyer()->getId() !== $currentUser->getId() && $chat->getSeller()->getId() !== $currentUser->getId()) {
             return $this->json(['message' => 'Accès refusé'], Response::HTTP_FORBIDDEN);
         }
 
-        $otherUser = $chat->getUser1()->getId() === $currentUser->getId()
-            ? $chat->getUser2()
-            : $chat->getUser1();
+        $otherUser = $chat->getBuyer()->getId() === $currentUser->getId()
+            ? $chat->getSeller()
+            : $chat->getBuyer();
 
         $messages = [];
         foreach ($chat->getMessages() as $message) {
@@ -121,7 +121,7 @@ class ChatController extends AbstractController
             'productStatus' => $chat->getProduct()->isPublished(),
             'productFile' => $chat->getProduct()->getFiles()[0]?->getPath(),
             'linkedOrder' => $currentUser !== $chat->getProduct()->getUser() ? null :[
-                'buyer' => $chat->getUser1()?->getUsername(),
+                'buyer' => $chat->getBuyer()?->getUsername(),
                 'qrToken' => $chat->getLinkedOrder()?->getQrCodeToken(),
                 'status' => $chat->getLinkedOrder()?->getStatus(),
             ],
@@ -143,7 +143,7 @@ class ChatController extends AbstractController
             return $this->json(['message' => 'Chat non trouvé'], Response::HTTP_NOT_FOUND);
         }
 
-        if ($chat->getUser1()->getId() !== $currentUser->getId() && $chat->getUser2()->getId() !== $currentUser->getId()) {
+        if ($chat->getBuyer()->getId() !== $currentUser->getId() && $chat->getSeller()->getId() !== $currentUser->getId()) {
             return $this->json(['message' => 'Accès refusé'], Response::HTTP_FORBIDDEN);
         }
 
@@ -179,7 +179,7 @@ class ChatController extends AbstractController
             return $this->json(['message' => 'Chat non trouvé'], Response::HTTP_NOT_FOUND);
         }
 
-        if ($chat->getUser1()->getId() !== $currentUser->getId() && $chat->getUser2()->getId() !== $currentUser->getId()) {
+        if ($chat->getBuyer()->getId() !== $currentUser->getId() && $chat->getSeller()->getId() !== $currentUser->getId()) {
             return $this->json(['message' => 'Accès refusé'], Response::HTTP_FORBIDDEN);
         }
 
@@ -188,9 +188,9 @@ class ChatController extends AbstractController
             return $this->json(['message' => 'Le contenu du message est requis'], Response::HTTP_BAD_REQUEST);
         }
 
-        $recipient = $chat->getUser1()->getId() === $currentUser->getId()
-            ? $chat->getUser2()
-            : $chat->getUser1();
+        $recipient = $chat->getBuyer()->getId() === $currentUser->getId()
+            ? $chat->getSeller()
+            : $chat->getBuyer();
 
         $message = new Message();
         $message->setContent($data['content']);
@@ -254,8 +254,8 @@ class ChatController extends AbstractController
 
         $product = $productRepository->find($productId);
         $chat = new Chat();
-        $chat->setUser1($currentUser);
-        $chat->setUser2($otherUser);
+        $chat->setBuyer($currentUser);
+        $chat->setSeller($otherUser);
         $chat->setProduct($product);
 
         $this->entityManager->persist($chat);
@@ -303,6 +303,16 @@ class ChatController extends AbstractController
             'exists' => false,
             'chatId' => null,
         ]);
+    }
+
+    #[Route('/chats/{buyerId}/{sellerId}/{productId}', name: 'chat_getByProductAndUsers', methods: ['GET'])]
+    public function getChatByProductAndUsers(int $buyerId, int $sellerId, int $productId, ChatRepository $chatRepository): JsonResponse
+    {
+        $chat = $chatRepository->findChatBetweenUsersAndProduct($buyerId, $sellerId, $productId);
+
+        $jsonChat = $this->serializer->serialize($chat, 'json', ['groups' => 'chat:read']);
+
+        return new JsonResponse($jsonChat, Response::HTTP_OK, [], true);
     }
 
 }

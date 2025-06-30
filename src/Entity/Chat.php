@@ -17,13 +17,14 @@ class Chat
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups('chat:read')]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'chats')]
-    private ?User $user1 = null;
+    private ?User $buyer = null;
 
     #[ORM\ManyToOne(inversedBy: 'chats')]
-    private ?User $user2 = null;
+    private ?User $seller = null;
 
     /**
      * @var Collection<int, Message>
@@ -48,26 +49,26 @@ class Chat
         return $this->id;
     }
 
-    public function getUser1(): ?User
+    public function getBuyer(): ?User
     {
-        return $this->user1;
+        return $this->buyer;
     }
 
-    public function setUser1(?User $user1): static
+    public function setBuyer(?User $buyer): static
     {
-        $this->user1 = $user1;
+        $this->buyer = $buyer;
 
         return $this;
     }
 
-    public function getUser2(): ?User
+    public function getSeller(): ?User
     {
-        return $this->user2;
+        return $this->seller;
     }
 
-    public function setUser2(?User $user2): static
+    public function setSeller(?User $seller): static
     {
-        $this->user2 = $user2;
+        $this->seller = $seller;
 
         return $this;
     }

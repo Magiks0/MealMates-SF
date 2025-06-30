@@ -2,9 +2,9 @@
 
     namespace App\Controller;
 
+    use App\Entity\Chat;
     use App\Entity\Order;
     use App\Entity\Product;
-    use App\Entity\Purchase;
     use App\Repository\ChatRepository;
     use App\Repository\ProductRepository;
     use App\Repository\UserRepository;
@@ -62,6 +62,17 @@
                 ->setSeller($product->getUser());
 
             $chat = $chatRepository->findChatBetweenUsersAndProduct($user->getId(), $product->getUser()->getId(), $product->getId());
+
+            if (!$chat) {
+                $chat = (new Chat())
+                    ->setProduct($product)
+                    ->setBuyer($user)
+                    ->setSeller($product->getUser())
+                    ->setLinkedOrder($order);
+
+                $this->entityManager->persist($chat);
+            }
+
             $chat?->setLinkedOrder($order);
 
             $this->entityManager->persist($order);

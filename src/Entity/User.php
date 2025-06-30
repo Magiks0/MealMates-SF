@@ -73,7 +73,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->messages = new ArrayCollection();
         $this->chats = new ArrayCollection();
         $this->products = new ArrayCollection();
-        $this->purchases = new ArrayCollection();
         $this->orders = new ArrayCollection();
     }
 
@@ -86,7 +85,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @var Collection<int, Chat>
      */
-    #[ORM\OneToMany(targetEntity: Chat::class, mappedBy: 'user1')]
+    #[ORM\OneToMany(targetEntity: Chat::class, mappedBy: 'buyer')]
     private Collection $chats;
 
     /**
@@ -328,7 +327,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         if (!$this->chats->contains($chat)) {
             $this->chats->add($chat);
-            $chat->setUser1($this);
+            $chat->setBuyer($this);
         }
 
         return $this;
@@ -338,50 +337,20 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         if ($this->chats->removeElement($chat)) {
             // set the owning side to null (unless already changed)
-            if ($chat->getUser1() === $this) {
-                $chat->setUser1(null);
+            if ($chat->getBuyer() === $this) {
+                $chat->setBuyer(null);
             }
         }
 
         return $this;
     }
 
-    /**
-     * @return Collection<int, Purchase>
-     */
-    public function getSeller(): Collection
+    public function removePurchase(Order $order): static
     {
-        return $this->seller;
-    }
-
-    public function addSeller(Purchase $purchase): static
-    {
-        if (!$this->seller->contains($purchase)) {
-            $this->seller->add($purchase);
-            $purchase->setBuyer($this);
-        }
-
-        return $this;
-    }
-
-    public function removeSeller(Purchase $purchase): static
-    {
-        if ($this->seller->removeElement($purchase)) {
+        if ($this->orders->removeElement($order)) {
             // set the owning side to null (unless already changed)
-            if ($purchase->getBuyer() === $this) {
-                $purchase->setBuyer(null);
-            }
-        }
-
-        return $this;
-    }
-
-    public function removePurchase(Purchase $purchase): static
-    {
-        if ($this->purchases->removeElement($purchase)) {
-            // set the owning side to null (unless already changed)
-            if ($purchase->getSeller() === $this) {
-                $purchase->setSeller(null);
+            if ($order->getSeller() === $this) {
+                $order->setSeller(null);
             }
         }
 
