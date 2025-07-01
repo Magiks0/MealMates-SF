@@ -83,6 +83,50 @@ class ProductController extends AbstractController
         return new JsonResponse($jsonResponse, Response::HTTP_OK, [], true);
     }
 
+    #[Route('/product/{id}', name: 'delete_product', methods: ['DELETE'])]
+    public function deleteProduct(
+        int $id,
+        ProductRepository $productRepository,
+        EntityManagerInterface $entityManager
+    ): JsonResponse {
+        $user = $this->getUser();
+
+        if (!$user) {
+            return new JsonResponse(['error' => 'User not authenticated'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $product = $productRepository->find($id);
+
+        if (!$product) {
+            return new JsonResponse(['error' => 'Product not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        // Vérifier que l'utilisateur est bien le propriétaire du produit
+        if ($product->getUser() !== $user) {
+            return new JsonResponse(['error' => 'Unauthorized to delete this product'], Response::HTTP_FORBIDDEN);
+        }
+
+        // Supprimer les chats associés au produit et leurs messages
+        foreach ($product->getChats() as $chat) {
+            // Supprimer les messages du chat
+            foreach ($chat->getMessages() as $message) {
+                $entityManager->remove($message);
+            }
+            $entityManager->remove($chat);
+        }
+
+        // Supprimer les fichiers associés au produit
+        foreach ($product->getFiles() as $file) {
+            $entityManager->remove($file);
+        }
+
+        // Supprimer le produit
+        $entityManager->remove($product);
+        $entityManager->flush();
+
+        return new JsonResponse(['message' => 'Product, chats, messages, and all references deleted successfully'], Response::HTTP_OK);
+    }
+
     #[Route('/product/last-chance', name: 'last_chance', methods: ['GET'])]
     public function getLastChanceProducts(SerializerInterface $serializer, ProductRepository $productRepository): JsonResponse
     {
