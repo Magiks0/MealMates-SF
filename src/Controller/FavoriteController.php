@@ -43,7 +43,7 @@ class FavoriteController extends AbstractController
         return new JsonResponse($jsonProducts, Response::HTTP_OK, [], true);
     }
 
-    #[Route('/favorites/{id}', name: 'api_favorites_toggle', methods: ['GET'])]
+    #[Route('/favorites/{id}', name: 'api_favorites_toggle', methods: ['POST'])]
     public function toggleFavorite(Product $product): JsonResponse
     {
         $user = $this->getUser();
