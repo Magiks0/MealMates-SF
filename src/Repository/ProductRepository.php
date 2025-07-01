@@ -39,11 +39,12 @@ class ProductRepository extends ServiceEntityRepository
                 ->setParameter('maxPrice', $filters['maxPrice']);
         }
 
-        if (!empty($filters['dietary'])) {
+        if (!empty($filters['dietaries'])) {
+            $dietaryIds = explode(',', $filters['dietaries']);
             $qb
                 ->join('p.dietaries', 'd')
-                ->andWhere('d.name = :dietetic')
-                ->setParameter('dietetic', $filters['dietetic']);
+                ->andWhere('d.id IN (:dietaries)')
+                ->setParameter('dietaries', $dietaryIds);
         }
 
         if (!empty($filters['peremptionDate'])) {
