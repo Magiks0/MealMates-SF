@@ -47,7 +47,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $username = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups('product:read')]
+    #[Groups(['product:read', 'user:read'])]
     private ?string $address = null;
 
     #[ORM\Column(length: 255, nullable: true)]

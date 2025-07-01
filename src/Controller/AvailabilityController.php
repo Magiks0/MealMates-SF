@@ -9,79 +9,68 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/api')]
 class AvailabilityController extends AbstractController
 {
-    #[Route('/availabilities', name: 'availabilities', methods: ['GET'])]
-    public function getAvailabilities(AvailabilityRepository $availabilityRepository, SerializerInterface $serializer): JsonResponse
+    #[Route('/availabilities', name: 'get_user_availabilities', methods: ['GET'])]
+    public function getUserAvailabilities(AvailabilityRepository $availabilityRepository): JsonResponse
     {
-        $availabilities = $availabilityRepository->findAll();
-        $jsonAvailabilities = $serializer->serialize($availabilities, 'json');
+        $user = $this->getUser();
+        $availabilities = $availabilityRepository->findBy(['user' => $user]);
 
-        return new JsonResponse($jsonAvailabilities, Response::HTTP_OK, [], true);
+        $data = array_map(function (Availability $availability) {
+            return [
+                'id' => $availability->getId(),
+                'dayOfWeek' => $availability->getDayOfWeek()->value,
+                'min_time' => $availability->getMinTime()->format('H:i:s'),
+                'max_time' => $availability->getMaxTime()->format('H:i:s'),
+            ];
+        }, $availabilities);
+
+        return $this->json($data);
     }
 
-    #[Route('/availabilities/update', name: 'update_availabilities', methods: ['PUT'])]
-    public function updateAvailabilities(
+    #[Route('/availabilities/update', name: 'update_user_availabilities', methods: ['PUT'])]
+    public function updateUserAvailabilities(
         Request $request,
-        EntityManagerInterface $entityManager,
+        EntityManagerInterface $em,
         AvailabilityRepository $availabilityRepository
     ): JsonResponse {
         $user = $this->getUser();
-        
-        if (!$user) {
-            return new JsonResponse(['message' => 'User not authenticated'], Response::HTTP_UNAUTHORIZED);
+        $content = json_decode($request->getContent(), true);
+
+        if (!is_array($content)) {
+            return $this->json(['message' => 'Format JSON invalide'], 400);
         }
 
-        $data = json_decode($request->getContent(), true);
-
-        if (!$data || !is_array($data)) {
-            return new JsonResponse(['message' => 'Invalid JSON data'], Response::HTTP_BAD_REQUEST);
+        // Supprimer les anciennes disponibilités
+        $oldAvailabilities = $availabilityRepository->findBy(['user' => $user]);
+        foreach ($oldAvailabilities as $availability) {
+            $em->remove($availability);
         }
 
-        foreach ($data as $item) {
-            if (!isset($item['dayOfWeek'], $item['min_time'], $item['max_time'])) {
-                return new JsonResponse(['message' => 'Missing required fields'], Response::HTTP_BAD_REQUEST);
+        foreach ($content as $item) {
+            if (
+                !isset($item['dayOfWeek'], $item['min_time'], $item['max_time']) ||
+                !in_array($item['dayOfWeek'], DayOfWeek::getValues())
+            ) {
+                return $this->json(['message' => 'Données invalides pour un ou plusieurs créneaux'], 400);
             }
 
-            $dayOfWeek = DayOfWeek::tryFrom($item['dayOfWeek']);
+            $availability = new Availability();
+            $availability->setUser($user);
+            $availability->setDayOfWeek($item['dayOfWeek']);
+            $availability->setMinTime($item['min_time']);
+            $availability->setMaxTime($item['max_time']);
 
-            if (!$dayOfWeek) {
-                return new JsonResponse(['message' => 'Invalid dayOfWeek value'], Response::HTTP_BAD_REQUEST);
-            }
-
-            $minTime = \DateTime::createFromFormat('H:i:s', $item['min_time']);
-            $maxTime = \DateTime::createFromFormat('H:i:s', $item['max_time']);
-
-            if (!$minTime || !$maxTime) {
-                return new JsonResponse(['message' => 'Invalid time format (expected H:i:s)'], Response::HTTP_BAD_REQUEST);
-            }
-
-            // Vérifier si l'utilisateur a déjà une disponibilité pour ce jour
-            $availability = $availabilityRepository->findOneBy([
-                'user' => $user,
-                'dayOfWeek' => $dayOfWeek
-            ]);
-
-            if (!$availability) {
-                $availability = new Availability();
-                $availability->setUser($user);
-                $availability->setDayOfWeek($dayOfWeek);
-                $entityManager->persist($availability);
-            }
-
-            $availability->setMinTime($minTime);
-            $availability->setMaxTime($maxTime);
+            $em->persist($availability);
         }
 
-        $entityManager->flush();
+        $em->flush();
 
-        return new JsonResponse(['message' => 'Availability updated successfully'], Response::HTTP_OK);
+        return $this->json(['message' => 'Disponibilités mises à jour avec succès']);
     }
-
-
 }
