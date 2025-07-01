@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Address;
 use App\Entity\File;
 use App\Entity\Product;
+use App\Repository\DietaryRepository;
 use App\Repository\OrderRepository;
 use App\Repository\ProductRepository;
 use App\Repository\TypeRepository;
@@ -102,7 +103,7 @@ class ProductController extends AbstractController
     }
 
     #[Route('/product/new', name: 'product', methods: ['POST'])]
-    public function newProduct(Request $request, EntityManagerInterface $entityManager, StripeService $stripeService, Filesystem $filesystem, TypeRepository $typeRepository): JsonResponse
+    public function newProduct(Request $request, EntityManagerInterface $entityManager, StripeService $stripeService, Filesystem $filesystem, TypeRepository $typeRepository, DietaryRepository $dietaryRepository): JsonResponse
     {
         try {
             $user = $this->getUser();
@@ -115,6 +116,8 @@ class ProductController extends AbstractController
             $donation = filter_var($request->request->get('donation'), FILTER_VALIDATE_BOOLEAN);
             $locationJson = $request->request->get('location');
             $locationData = json_decode($locationJson, true);
+            $dietariesJson = $request->request->get('dietaries');
+            $dietariesData = json_decode($dietariesJson, true);
 
             if (!$locationData || !isset($locationData['address']) || !isset($locationData['coordinates'])) {
                 return new JsonResponse(['error' => 'Données de localisation invalides'], 400);
@@ -134,6 +137,11 @@ class ProductController extends AbstractController
                 ->setCollectionDate($collection_date)
                 ->setUser($user)
                 ->setDonation($donation);
+
+            foreach ($dietariesData  as $dietaryId) {
+                $dietary = $dietaryRepository->find($dietaryId);
+                $product->addDietary($dietary);
+            }
 
             if ($product->isDonation()) {
                 $product->setPrice(0);
