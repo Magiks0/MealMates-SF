@@ -58,8 +58,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @var Collection<int, Dietary>
      */
     #[ORM\ManyToMany(targetEntity: Dietary::class, inversedBy: 'users')]
+    #[Groups(['user:read'])]  // Ajouter cette ligne pour inclure les préférences dans la sérialisation
     private Collection $dietaries;
-
+    
     /**
      * @var Collection<int, Product>
      */

@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Repository\UserRepository;
+use App\Repository\DietaryRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -84,7 +85,7 @@ class UserController extends AbstractController
     }
 
     #[Route('/users/image', name: 'set_user_image', methods: ['PATCH'])]
-    public function setImageUrl( Request $request, EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse {
+    public function setImageUrl(Request $request, EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse {
         $user = $this->getUser();
 
         if (!$user) {
@@ -98,6 +99,46 @@ class UserController extends AbstractController
         }
 
         $user->setImageUrl($data['image_url']);
+        $em->persist($user);
+        $em->flush();
+
+        $jsonUser = $serializer->serialize($user, 'json', ['groups' => 'user:read']);
+
+        return new JsonResponse($jsonUser, Response::HTTP_OK, [], true);
+    }
+
+    #[Route('/users/dietary-preferences', name: 'update_dietary_preferences', methods: ['PUT'])]
+    public function updateDietaryPreferences(
+        Request $request, 
+        EntityManagerInterface $em, 
+        SerializerInterface $serializer,
+        DietaryRepository $dietaryRepository
+    ): JsonResponse {
+        $user = $this->getUser();
+
+        if (!$user) {
+            return new JsonResponse(['message' => 'Utilisateur non connecté'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $data = json_decode($request->getContent(), true);
+
+        if (!isset($data['dietaryIds']) || !is_array($data['dietaryIds'])) {
+            return new JsonResponse(['message' => 'IDs des préférences alimentaires manquants'], Response::HTTP_BAD_REQUEST);
+        }
+
+        // Supprimer toutes les préférences actuelles
+        foreach ($user->getDietaries() as $dietary) {
+            $user->removeDietetic($dietary);
+        }
+
+        // Ajouter les nouvelles préférences
+        foreach ($data['dietaryIds'] as $dietaryId) {
+            $dietary = $dietaryRepository->find($dietaryId);
+            if ($dietary) {
+                $user->addDietetic($dietary);
+            }
+        }
+
         $em->persist($user);
         $em->flush();
 
