@@ -93,11 +93,18 @@ class Product
     #[ORM\Column]
     private ?bool $published = true;
 
+    /**
+     * @var Collection<int, Reservation>
+     */
+    #[ORM\OneToMany(targetEntity: Reservation::class, mappedBy: 'product')]
+    private Collection $reservations;
+
     public function __construct()
     {
         $this->files = new ArrayCollection();
         $this->dietaries = new ArrayCollection();
         $this->chats = new ArrayCollection();
+        $this->reservations = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -350,6 +357,36 @@ class Product
     public function setPublished(bool $published): static
     {
         $this->published = $published;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Reservation>
+     */
+    public function getReservations(): Collection
+    {
+        return $this->reservations;
+    }
+
+    public function addReservation(Reservation $reservation): static
+    {
+        if (!$this->reservations->contains($reservation)) {
+            $this->reservations->add($reservation);
+            $reservation->setProduct($this);
+        }
+
+        return $this;
+    }
+
+    public function removeReservation(Reservation $reservation): static
+    {
+        if ($this->reservations->removeElement($reservation)) {
+            // set the owning side to null (unless already changed)
+            if ($reservation->getProduct() === $this) {
+                $reservation->setProduct(null);
+            }
+        }
 
         return $this;
     }
