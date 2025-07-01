@@ -13,7 +13,7 @@ trait TimestampableTrait
     use TimestampableEntity;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: false)]
-    #[Groups('chat:read')]
+    #[Groups(['chat:read', 'rating:read'])]
     #[Gedmo\Timestampable(on: 'create')]
     protected $createdAt;
 

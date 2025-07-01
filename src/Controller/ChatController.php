@@ -120,7 +120,9 @@ class ChatController extends AbstractController
             'productPrice' => $chat->getProduct()->getPrice(),
             'productStatus' => $chat->getProduct()->isPublished(),
             'productFile' => $chat->getProduct()->getFiles()[0]?->getPath(),
-            'linkedOrder' => $currentUser !== $chat->getProduct()->getUser() ? null :[
+            'linkedOrder' => [
+                'id' => $chat->getLinkedOrder()?->getId(),
+                'role' => $currentUser === $chat->getProduct()->getUser() ? 'seller' : 'buyer',
                 'buyer' => $chat->getBuyer()?->getUsername(),
                 'qrToken' => $chat->getLinkedOrder()?->getQrCodeToken(),
                 'status' => $chat->getLinkedOrder()?->getStatus(),

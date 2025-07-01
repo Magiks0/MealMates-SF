@@ -43,7 +43,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private Collection $availabilities;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['product:read', 'user:read'])]
+    #[Groups(['product:read', 'user:read', 'rating:read'])]
     private ?string $username = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -51,7 +51,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $address = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups('product:read')]
+    #[Groups(['product:read', 'rating:read'])]
     private ?string $image_url = null;
 
     /**

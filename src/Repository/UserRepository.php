@@ -31,6 +31,11 @@ class UserRepository extends ServiceEntityRepository
     //        ;
     //    }
 
+    public function getUserById(int $id): ?User
+    {
+        return $this->find($id);
+    }
+
     //    public function findOneBySomeField($value): ?User
     //    {
     //        return $this->createQueryBuilder('u')
