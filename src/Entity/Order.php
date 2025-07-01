@@ -32,10 +32,6 @@ class  Order
     #[Groups(['order:read', 'rating:read'] )]
     private ?Product $product = null;
 
-    #[ORM\Column(length: 255)]
-    #[Groups(['order:read'])]
-    private ?string $status = null;
-
     #[ORM\Column(length: 255, nullable: true, unique: true)]
     #[Groups(['order:read'])]
     private ?string $qrCodeToken = null;
