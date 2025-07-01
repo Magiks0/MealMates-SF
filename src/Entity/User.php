@@ -16,7 +16,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['user:read', 'product:read'])]
+    #[Groups(['user:read', 'product:read', 'order:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 180, unique: true)]
@@ -26,7 +26,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private array $roles = [];
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $password = null;
 
     #[ORM\Column]
@@ -43,7 +43,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private Collection $availabilities;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['product:read', 'user:read'])]
+    #[Groups(['product:read', 'user:read', 'order:read'])]
     private ?string $username = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -73,7 +73,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->messages = new ArrayCollection();
         $this->chats = new ArrayCollection();
         $this->products = new ArrayCollection();
-        $this->purchases = new ArrayCollection();
+        $this->orders = new ArrayCollection();
         $this->reservations = new ArrayCollection();
     }
 
@@ -86,14 +86,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @var Collection<int, Chat>
      */
-    #[ORM\OneToMany(targetEntity: Chat::class, mappedBy: 'user1')]
+    #[ORM\OneToMany(targetEntity: Chat::class, mappedBy: 'buyer')]
     private Collection $chats;
 
     /**
-     * @var Collection<int, Purchase>
+     * @var Collection<int, Order>
      */
-    #[ORM\OneToMany(targetEntity: Purchase::class, mappedBy: 'buyer')]
-    private Collection $purchases;
+    #[ORM\OneToMany(targetEntity: Order::class, mappedBy: 'buyer')]
+    private Collection $orders;
 
     /**
      * @var Collection<int, Reservation>
@@ -133,7 +133,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->password;
     }
 
-    public function setPassword(string $password): static
+    public function setPassword(?string $password): static
     {
         $this->password = $password;
         return $this;
@@ -334,7 +334,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         if (!$this->chats->contains($chat)) {
             $this->chats->add($chat);
-            $chat->setUser1($this);
+            $chat->setBuyer($this);
         }
 
         return $this;
@@ -344,8 +344,20 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         if ($this->chats->removeElement($chat)) {
             // set the owning side to null (unless already changed)
-            if ($chat->getUser1() === $this) {
-                $chat->setUser1(null);
+            if ($chat->getBuyer() === $this) {
+                $chat->setBuyer(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function removePurchase(Order $order): static
+    {
+        if ($this->orders->removeElement($order)) {
+            // set the owning side to null (unless already changed)
+            if ($order->getSeller() === $this) {
+                $order->setSeller(null);
             }
         }
 
@@ -353,59 +365,29 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /**
-     * @return Collection<int, Purchase>
+     * @return Collection<int, Order>
      */
-    public function getSeller(): Collection
+    public function getOrders(): Collection
     {
-        return $this->seller;
+        return $this->orders;
     }
 
-    public function addSeller(Purchase $purchase): static
+    public function addOrder(Order $order): static
     {
-        if (!$this->seller->contains($purchase)) {
-            $this->seller->add($purchase);
-            $purchase->setBuyer($this);
+        if (!$this->orders->contains($order)) {
+            $this->orders->add($order);
+            $order->setBuyer($this);
         }
 
         return $this;
     }
 
-    public function removeSeller(Purchase $purchase): static
+    public function removeOrder(Order $order): static
     {
-        if ($this->seller->removeElement($purchase)) {
+        if ($this->orders->removeElement($order)) {
             // set the owning side to null (unless already changed)
-            if ($purchase->getBuyer() === $this) {
-                $purchase->setBuyer(null);
-            }
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Purchase>
-     */
-    public function getPurchases(): Collection
-    {
-        return $this->purchases;
-    }
-
-    public function addPurchase(Purchase $purchase): static
-    {
-        if (!$this->purchases->contains($purchase)) {
-            $this->purchases->add($purchase);
-            $purchase->setSeller($this);
-        }
-
-        return $this;
-    }
-
-    public function removePurchase(Purchase $purchase): static
-    {
-        if ($this->purchases->removeElement($purchase)) {
-            // set the owning side to null (unless already changed)
-            if ($purchase->getSeller() === $this) {
-                $purchase->setSeller(null);
+            if ($order->getBuyer() === $this) {
+                $order->setBuyer(null);
             }
         }
 
@@ -420,16 +402,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->reservations;
     }
 
-    public function addReservation(Reservation $reservation): static
-    {
-        if (!$this->reservations->contains($reservation)) {
-            $this->reservations->add($reservation);
-            $reservation->setBuyer($this);
-        }
-
-        return $this;
-    }
-
     public function removeReservation(Reservation $reservation): static
     {
         if ($this->reservations->removeElement($reservation)) {
@@ -437,6 +409,20 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             if ($reservation->getBuyer() === $this) {
                 $reservation->setBuyer(null);
             }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Reservation>
+     */
+
+    public function addReservation(Reservation $reservation): static
+    {
+        if (!$this->reservations->contains($reservation)) {
+            $this->reservations->add($reservation);
+            $reservation->setBuyer($this);
         }
 
         return $this;

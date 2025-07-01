@@ -23,9 +23,9 @@ class ProductRepository extends ServiceEntityRepository
     public function findFilteredProducts(array $filters, User $user)
     {
         $qb = $this
-                ->createQueryBuilder('p')
-                ->where('p.published = true')
-            ;
+            ->createQueryBuilder('p')
+            ->where('p.published = true')
+        ;
 
         if (!empty($filters['minPrice'])) {
             $qb
@@ -68,6 +68,13 @@ class ProductRepository extends ServiceEntityRepository
             );
         }
 
+        if (!empty($filters['keyword'])) {
+            $kw = trim($filters['keyword']);
+            $qb->andWhere('LOWER(p.title)       LIKE :kw
+                      OR LOWER(p.description) LIKE :kw')
+                ->setParameter('kw', '%' . mb_strtolower($kw) . '%');
+        }
+
         $qb->innerJoin('p.user', 'u')
             ->andWhere('u.id NOT LIKE :userId')
             ->setParameter('userId', $user->getId());
@@ -79,12 +86,12 @@ class ProductRepository extends ServiceEntityRepository
     {
         $kmInLat = 0.009; // Environ 1km en latitude
         $kmInLon = 0.009 / cos(deg2rad($latitude)); // Ajustement pour la longitude basé sur la latitude
-        
+
         $latMin = $latitude - ($radius * $kmInLat);
         $latMax = $latitude + ($radius * $kmInLat);
         $lonMin = $longitude - ($radius * $kmInLon);
         $lonMax = $longitude + ($radius * $kmInLon);
-        
+
         $qb = $this->createQueryBuilder('p')
             ->join('p.address', 'a')
             ->where('a.latitude BETWEEN :latMin AND :latMax')
@@ -94,7 +101,7 @@ class ProductRepository extends ServiceEntityRepository
             ->setParameter('lonMin', $lonMin)
             ->setParameter('lonMax', $lonMax)
             ->orderBy('p.createdAt', 'DESC');
-        
+
         return $qb->getQuery()->getResult();
     }
 
@@ -145,6 +152,16 @@ class ProductRepository extends ServiceEntityRepository
             ->leftJoin('p.address', 'a')
             ->leftJoin('p.files', 'f')
             ->addSelect('u', 't', 'd', 'a', 'f')
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function findByUser(User $user): array
+    {
+        return $this->createQueryBuilder('p')
+            ->where('p.user = :user')
+            ->setParameter('user', $user)
+            ->orderBy('p.createdAt', 'DESC')
             ->getQuery()
             ->getResult();
     }

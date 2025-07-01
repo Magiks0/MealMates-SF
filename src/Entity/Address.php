@@ -19,7 +19,7 @@ class Address
 
     
     #[ORM\Column(length: 255)]
-    #[Groups('product:read')]
+    #[Groups(['product:read', 'order:read'])]
     private ?string $name = null;
 
     #[ORM\Column]

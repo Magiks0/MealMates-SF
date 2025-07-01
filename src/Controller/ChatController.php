@@ -46,12 +46,13 @@ class ChatController extends AbstractController
 
         $formattedChats = [];
         foreach ($chats as $chat) {
-            $otherUser = $chat->getUser1()->getId() === $currentUser->getId()
-                ? $chat->getUser2()
-                : $chat->getUser1();
+            $otherUser = $chat->getBuyer()->getId() === $currentUser->getId()
+                ? $chat->getSeller()
+                : $chat->getBuyer();
 
             $messages = $chat->getMessages();
             $lastMessage = null;
+
             if (count($messages) > 0) {
                 $lastMessage = $messages[count($messages) - 1];
             }
@@ -61,14 +62,13 @@ class ChatController extends AbstractController
                 'otherUser' => [
                     'id' => $otherUser->getId(),
                     'username' => $otherUser->getUsername(),
-                    'transactionCount' => 0 // À remplacer par une vraie donnée si disponible
                 ],
                 'lastMessage' => $lastMessage ? [
                     'content' => $lastMessage->getContent(),
                     'createdAt' => $lastMessage->getCreatedAt()->format('Y-m-d H:i:s'),
                     'isFromCurrentUser' => $lastMessage->getAuthor()->getId() === $currentUser->getId()
                 ] : null,
-                'updatedAt' => $chat->getUpdatedAt()->format('Y-m-d H:i:s')
+                'updatedAt' => $chat->getUpdatedAt()->format('Y-m-d H:i:s'),
             ];
         }
 
@@ -88,13 +88,13 @@ class ChatController extends AbstractController
             return $this->json(['message' => 'Chat non trouvé'], Response::HTTP_NOT_FOUND);
         }
 
-        if ($chat->getUser1()->getId() !== $currentUser->getId() && $chat->getUser2()->getId() !== $currentUser->getId()) {
+        if ($chat->getBuyer()->getId() !== $currentUser->getId() && $chat->getSeller()->getId() !== $currentUser->getId()) {
             return $this->json(['message' => 'Accès refusé'], Response::HTTP_FORBIDDEN);
         }
 
-        $otherUser = $chat->getUser1()->getId() === $currentUser->getId()
-            ? $chat->getUser2()
-            : $chat->getUser1();
+        $otherUser = $chat->getBuyer()->getId() === $currentUser->getId()
+            ? $chat->getSeller()
+            : $chat->getBuyer();
 
         $messages = [];
         foreach ($chat->getMessages() as $message) {
@@ -118,7 +118,14 @@ class ChatController extends AbstractController
             'productId' => $chat->getProduct()->getId(),
             'productName' => $chat->getProduct()->getTitle(),
             'productPrice' => $chat->getProduct()->getPrice(),
-            'productFile' => '$chat->getProduct()->getFiles()[0]->getPath()'
+            'productStatus' => $chat->getProduct()->isPublished(),
+            'productFile' => $chat->getProduct()->getFiles()[0]?->getPath(),
+            'linkedOrder' => [
+                'role' => $currentUser === $chat->getProduct()->getUser() ? 'seller' : 'buyer',
+                'buyer' => $chat->getBuyer()?->getUsername(),
+                'qrToken' => $chat->getLinkedOrder()?->getQrCodeToken(),
+                'status' => $chat->getLinkedOrder()?->getStatus(),
+            ],
         ];
 
         return $this->json($result);
@@ -137,7 +144,7 @@ class ChatController extends AbstractController
             return $this->json(['message' => 'Chat non trouvé'], Response::HTTP_NOT_FOUND);
         }
 
-        if ($chat->getUser1()->getId() !== $currentUser->getId() && $chat->getUser2()->getId() !== $currentUser->getId()) {
+        if ($chat->getBuyer()->getId() !== $currentUser->getId() && $chat->getSeller()->getId() !== $currentUser->getId()) {
             return $this->json(['message' => 'Accès refusé'], Response::HTTP_FORBIDDEN);
         }
 
@@ -173,8 +180,7 @@ class ChatController extends AbstractController
             return $this->json(['message' => 'Chat non trouvé'], Response::HTTP_NOT_FOUND);
         }
 
-        // Vérifier que l'utilisateur fait partie de cette conversation
-        if ($chat->getUser1()->getId() !== $currentUser->getId() && $chat->getUser2()->getId() !== $currentUser->getId()) {
+        if ($chat->getBuyer()->getId() !== $currentUser->getId() && $chat->getSeller()->getId() !== $currentUser->getId()) {
             return $this->json(['message' => 'Accès refusé'], Response::HTTP_FORBIDDEN);
         }
 
@@ -183,20 +189,15 @@ class ChatController extends AbstractController
             return $this->json(['message' => 'Le contenu du message est requis'], Response::HTTP_BAD_REQUEST);
         }
 
-        // Déterminer le destinataire
-        $recipient = $chat->getUser1()->getId() === $currentUser->getId()
-            ? $chat->getUser2()
-            : $chat->getUser1();
+        $recipient = $chat->getBuyer()->getId() === $currentUser->getId()
+            ? $chat->getSeller()
+            : $chat->getBuyer();
 
-        // Créer le nouveau message
         $message = new Message();
         $message->setContent($data['content']);
         $message->setAuthor($currentUser);
         $message->setRecipient($recipient);
         $message->setChat($chat);
-
-        // Mettre à jour le timestamp du chat
-        $chat->setUpdatedAt(new \DateTime());
 
         $this->entityManager->persist($message);
         $this->entityManager->flush();
@@ -235,11 +236,9 @@ class ChatController extends AbstractController
             return $this->json(['message' => 'Le message ne peut pas être vide'], Response::HTTP_BAD_REQUEST);
         }
 
-        // Vérifie si une conversation existe déjà
         $productId = $data['productId'];
         $existingChat = $chatRepository->findChatBetweenUsersAndProduct($currentUser->getId(), $userId, $productId);
         if ($existingChat) {
-            // Ajouter le message à la conversation existante
             $message = new Message();
             $message->setChat($existingChat);
             $message->setAuthor($currentUser);
@@ -256,8 +255,8 @@ class ChatController extends AbstractController
 
         $product = $productRepository->find($productId);
         $chat = new Chat();
-        $chat->setUser1($currentUser);
-        $chat->setUser2($otherUser);
+        $chat->setBuyer($currentUser);
+        $chat->setSeller($otherUser);
         $chat->setProduct($product);
 
         $this->entityManager->persist($chat);
@@ -292,7 +291,7 @@ class ChatController extends AbstractController
         }
 
         $product = $productRepository->find($productId);
-        $chat = $chatRepository->findChatBetweenUsersAndProduct($product->getUser()->getId(),$userId, $productId);
+        $chat = $chatRepository->findChatBetweenUsersAndProduct($userId, $product->getUser()->getId(), $productId);
 
         if ($chat) {
             return $this->json([
@@ -305,6 +304,16 @@ class ChatController extends AbstractController
             'exists' => false,
             'chatId' => null,
         ]);
+    }
+
+    #[Route('/chats/{buyerId}/{sellerId}/{productId}', name: 'chat_getByProductAndUsers', methods: ['GET'])]
+    public function getChatByProductAndUsers(int $buyerId, int $sellerId, int $productId, ChatRepository $chatRepository): JsonResponse
+    {
+        $chat = $chatRepository->findChatBetweenUsersAndProduct($buyerId, $sellerId, $productId);
+
+        $jsonChat = $this->serializer->serialize($chat, 'json', ['groups' => 'chat:read']);
+
+        return new JsonResponse($jsonChat, Response::HTTP_OK, [], true);
     }
 
 }

@@ -18,11 +18,11 @@ class Product
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['product:read', 'user:read'])]
+    #[Groups(['product:read', 'user:read', 'order:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['product:read', 'purchase:read'])]
+    #[Groups(['product:read', 'order:read'])]
     private ?string $title = null;
 
     #[ORM\Column(length: 255)]
@@ -30,7 +30,7 @@ class Product
     private ?string $description = null;
 
     #[ORM\Column]
-    #[Groups('product:read')]
+    #[Groups(['product:read', 'order:read'])]
     private ?int $quantity = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
@@ -38,7 +38,7 @@ class Product
     private ?\DateTimeInterface $peremptionDate = null;
 
     #[ORM\Column]
-    #[Groups(['product:read', 'purchase:read'])]
+    #[Groups(['product:read', 'order:read'])]
     private ?float $price = null;
 
     #[ORM\Column]
@@ -50,7 +50,7 @@ class Product
     private ?\DateTimeInterface $collection_date = null;
 
     #[ORM\ManyToOne(inversedBy: 'products')]
-    #[Groups('product:read', 'purchase:read')]
+    #[Groups('product:read', 'order:read')]
     private ?User $user = null;
 
     /**
@@ -72,7 +72,7 @@ class Product
     private Collection $dietaries;
 
     #[ORM\ManyToOne(inversedBy: 'products')]
-    #[Groups('product:read')]
+    #[Groups(['product:read', 'order:read'])]
     private ?Address $address = null;
 
     #[Groups('product:read')]
@@ -258,7 +258,7 @@ class Product
         return $this->dietaries;
     }
 
-    public function addDietary(self $dietary): static
+    public function addDietary(Dietary $dietary): static
     {
         if (!$this->dietaries->contains($dietary)) {
             $this->dietaries->add($dietary);
@@ -267,7 +267,7 @@ class Product
         return $this;
     }
 
-    public function removeDietary(self $dietary): static
+    public function removeDietary(Dietary $dietary): static
     {
         $this->dietaries->removeElement($dietary);
 
