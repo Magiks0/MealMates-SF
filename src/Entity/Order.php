@@ -29,12 +29,12 @@ class  Order
     private ?User $seller = null;
 
     #[ORM\OneToOne(cascade: ['persist', 'remove'])]
-    #[Groups(['order:read'])]
+    #[Groups(['order:read', 'rating:read'] )]
     private ?Product $product = null;
 
-    // #[ORM\Column(length: 255)]
-    // #[Groups(['order:read'])]
-    // private ?string $status = null;
+    #[ORM\Column(length: 255)]
+    #[Groups(['order:read'])]
+    private ?string $status = null;
 
     #[ORM\Column(length: 255, nullable: true, unique: true)]
     #[Groups(['order:read'])]
@@ -44,6 +44,8 @@ class  Order
     #[Groups(['order:read'])]
     private PurchaseStatus $purchaseStatus;
 
+    #[ORM\OneToOne(mappedBy: 'order', cascade: ['persist', 'remove'])]
+    private ?Rating $rating = null;
 
     public function getId(): ?int
     {
@@ -97,7 +99,6 @@ class  Order
         return $this;
     }
 
-
     public function getQrCodeToken(): ?string
     {
         return $this->qrCodeToken;
@@ -106,6 +107,22 @@ class  Order
     public function setQrCodeToken(string $qrCodeToken): static
     {
         $this->qrCodeToken = $qrCodeToken;
+
+        return $this;
+    }
+
+    public function getRating(): ?Rating
+    {
+        return $this->rating;
+    }
+
+    public function setRating(Rating $rating): static
+    {
+        if ($rating->getOrder() !== $this) {
+            $rating->setOrder($this);
+        }
+
+        $this->rating = $rating;
 
         return $this;
     }

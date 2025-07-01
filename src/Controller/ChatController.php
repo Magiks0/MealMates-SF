@@ -121,6 +121,7 @@ class ChatController extends AbstractController
             'productStatus' => $chat->getProduct()->isPublished(),
             'productFile' => $chat->getProduct()->getFiles()[0]?->getPath(),
             'linkedOrder' => [
+                'id' => $chat->getLinkedOrder()?->getId(),
                 'role' => $currentUser === $chat->getProduct()->getUser() ? 'seller' : 'buyer',
                 'buyer' => $chat->getBuyer()?->getUsername(),
                 'qrToken' => $chat->getLinkedOrder()?->getQrCodeToken(),
@@ -291,7 +292,7 @@ class ChatController extends AbstractController
         }
 
         $product = $productRepository->find($productId);
-        $chat = $chatRepository->findChatBetweenUsersAndProduct($userId, $product->getUser()->getId(), $productId);
+        $chat = $chatRepository->findChatBetweenUsersAndProduct($product->getUser()->getId(),$userId, $productId);
 
         if ($chat) {
             return $this->json([
