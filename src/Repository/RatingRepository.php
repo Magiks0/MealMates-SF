@@ -46,6 +46,20 @@ class RatingRepository extends ServiceEntityRepository
     }
 
     /**
+     * Check if an order has already been rated by a specific reviewer
+     */
+    public function findByOrderAndReviewer(int $orderId, int $reviewerId): ?Rating
+    {
+        return $this->createQueryBuilder('r')
+            ->andWhere('r.order = :orderId')
+            ->andWhere('r.reviewer = :reviewerId')
+            ->setParameter('orderId', $orderId)
+            ->setParameter('reviewerId', $reviewerId)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    /**
      * Check if an order has already been rated
      */
     public function findByOrder(int $orderId): ?Rating
@@ -55,5 +69,21 @@ class RatingRepository extends ServiceEntityRepository
             ->setParameter('orderId', $orderId)
             ->getQuery()
             ->getOneOrNullResult();
+    }
+
+        /**
+     * Update user's average rating
+     */
+    public function updateUserNotation(User $user): void
+    {
+        $averageRating = $this->getAverageRatingForUser($user);
+        
+        if ($averageRating !== null) {
+            $user->setNote($averageRating);
+        } else {
+            $user->setNote(null);
+        }
+        
+        $this->getEntityManager()->flush();
     }
 }

@@ -44,13 +44,6 @@ class RatingController extends AbstractController
 
         $currentUser = $this->security->getUser();
         
-        // Vérifier si l'utilisateur a déjà évalué cette commande
-        // $existingRating = $ratingRepository->findByOrderAndReviewer($order->getId(), $currentUser->getId());
-        // if ($existingRating) {
-        //     return new JsonResponse(['error' => 'You have already rated this transaction'], Response::HTTP_BAD_REQUEST);
-        // }
-
-     
         $reviewed = $userRepository->getUserById($data['reviewedId']);
 
         $rating = new Rating();
@@ -64,6 +57,9 @@ class RatingController extends AbstractController
         $this->entityManager->flush();
 
         $jsonRating = $this->serializer->serialize($rating, 'json', ['groups' => 'rating:read']);
+
+        $ratingRepository->updateUserNotation($reviewed);
+
         return new JsonResponse($jsonRating, Response::HTTP_CREATED, [], true);
     }
 
