@@ -34,6 +34,7 @@ class TestExpirationNotificationCommand extends Command
             ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Simuler sans créer de notifications')
             ->addOption('force', null, InputOption::VALUE_NONE, 'Ignorer les notifications existantes')
             ->addOption('days', null, InputOption::VALUE_REQUIRED, 'Nombre de jours à vérifier (défaut: 1)', '1')
+            ->addOption('user-id', null, InputOption::VALUE_REQUIRED, 'ID d\'un utilisateur spécifique')
         ;
     }
 
@@ -43,6 +44,7 @@ class TestExpirationNotificationCommand extends Command
         $dryRun = $input->getOption('dry-run');
         $force = $input->getOption('force');
         $days = (int) $input->getOption('days');
+        $userId = $input->getOption('user-id');
 
         $io->title('Test du système de notifications d\'expiration');
 
@@ -65,12 +67,17 @@ class TestExpirationNotificationCommand extends Command
         $notificationsCreated = 0;
 
         foreach ($dates as $date) {
-            $products = $this->productRepository->createQueryBuilder('p')
+            $qb = $this->productRepository->createQueryBuilder('p')
                 ->where('p.published = true')
                 ->andWhere('p.peremptionDate = :date')
-                ->setParameter('date', $date)
-                ->getQuery()
-                ->getResult();
+                ->setParameter('date', $date);
+
+            if ($userId) {
+                $qb->andWhere('p.user = :userId')
+                   ->setParameter('userId', $userId);
+            }
+
+            $products = $qb->getQuery()->getResult();
 
             $count = count($products);
             $totalProducts += $count;
@@ -103,6 +110,25 @@ class TestExpirationNotificationCommand extends Command
             $dryRun ? ' (mode simulation)' : ''
         ));
 
+        // Afficher un résumé des notifications créées
+        if ($notificationsCreated > 0 && !$dryRun) {
+            $io->section('Résumé des notifications créées :');
+            
+            $notifications = $this->notificationRepository->createQueryBuilder('n')
+                ->orderBy('n.notifiedAt', 'DESC')
+                ->setMaxResults($notificationsCreated)
+                ->getQuery()
+                ->getResult();
+
+            foreach ($notifications as $notification) {
+                $io->text(sprintf(
+                    '- %s : %s',
+                    $notification->getUser()->getEmail(),
+                    $notification->getTitle()
+                ));
+            }
+        }
+
         return Command::SUCCESS;
     }
 
@@ -114,8 +140,8 @@ class TestExpirationNotificationCommand extends Command
         bool $dryRun,
         bool $force
     ): bool {
-        $isToday = $expirationDate->format('Y-m-d') === $today->format('Y-m-d');
         $daysDiff = $today->diff($expirationDate)->days;
+        $isToday = $expirationDate->format('Y-m-d') === $today->format('Y-m-d');
 
         if ($isToday) {
             $type = Notification::TYPE_EXPIRATION_TODAY;
@@ -147,17 +173,19 @@ class TestExpirationNotificationCommand extends Command
         // Vérifier si une notification existe déjà
         if (!$force && $this->notificationRepository->existsForProductAndType($product, $type, new \DateTime())) {
             $io->text(sprintf(
-                '   ⏭️  %s (notification déjà envoyée)',
-                $product->getTitle()
+                '   ⏭️  %s - %s (notification déjà envoyée)',
+                $product->getTitle(),
+                $product->getUser()->getEmail()
             ));
             return false;
         }
 
         $io->text(sprintf(
-            '   📧 %s - %s (%s)',
+            '   📧 %s - %s (%s)%s',
             $product->getTitle(),
             $product->getUser()->getEmail(),
-            $type
+            $type,
+            $dryRun ? ' [SIMULATION]' : ''
         ));
 
         if (!$dryRun) {

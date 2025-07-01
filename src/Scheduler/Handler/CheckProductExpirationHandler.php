@@ -2,14 +2,13 @@
 
 namespace App\Scheduler\Handler;
 
-use Symfony\Component\Messenger\Attribute\AsMessageHandler;
-use App\Scheduler\Message\CheckProductExpirationMessage;
-use App\Entity\Product;
 use App\Entity\Notification;
-use App\Repository\ProductRepository;
+use App\Entity\Product;
 use App\Repository\NotificationRepository;
+use App\Repository\ProductRepository;
+use App\Scheduler\Message\CheckProductExpirationMessage;
 use Doctrine\ORM\EntityManagerInterface;
-
+use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler]
 class CheckProductExpirationHandler
@@ -28,7 +27,7 @@ class CheckProductExpirationHandler
         $tomorrow = clone $today;
         $tomorrow->modify('+1 day');
 
-        // Récupérer tous les produits publiés
+        // Récupérer tous les produits publiés qui expirent aujourd'hui ou demain
         $products = $this->productRepository->createQueryBuilder('p')
             ->where('p.published = true')
             ->andWhere('p.peremptionDate IN (:today, :tomorrow)')
@@ -52,12 +51,13 @@ class CheckProductExpirationHandler
         $peremptionDate = clone $product->getPeremptionDate();
         $peremptionDate->setTime(0, 0, 0);
         
+        $daysDiff = $today->diff($peremptionDate)->days;
         $isToday = $peremptionDate->format('Y-m-d') === $today->format('Y-m-d');
-        $isTomorrow = $peremptionDate->format('Y-m-d') === $today->modify('+1 day')->format('Y-m-d');
+        $isTomorrow = $daysDiff === 1 && $peremptionDate > $today;
 
         if ($isToday) {
             $type = Notification::TYPE_EXPIRATION_TODAY;
-            $title = "Produit expire aujourd'hui !";
+            $title = "⚠️ Produit expire aujourd'hui !";
             $message = sprintf(
                 "Votre produit '%s' expire aujourd'hui (%s). Il est urgent de le vendre ou de le consommer !",
                 $product->getTitle(),
@@ -65,7 +65,7 @@ class CheckProductExpirationHandler
             );
         } elseif ($isTomorrow) {
             $type = Notification::TYPE_EXPIRATION_TOMORROW;
-            $title = "Produit expire demain";
+            $title = "⏰ Produit expire demain";
             $message = sprintf(
                 "Votre produit '%s' expire demain (%s). Pensez à le vendre rapidement.",
                 $product->getTitle(),

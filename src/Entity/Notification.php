@@ -38,11 +38,11 @@ class Notification
     #[Groups(['notification:read'])]
     private ?bool $isRead = false;
 
-    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'notifications')]
     #[ORM\JoinColumn(nullable: false)]
     private ?User $user = null;
 
-    #[ORM\ManyToOne(targetEntity: Product::class)]
+    #[ORM\ManyToOne(targetEntity: Product::class, inversedBy: 'notifications')]
     #[ORM\JoinColumn(nullable: true)]
     #[Groups(['notification:read'])]
     private ?Product $product = null;

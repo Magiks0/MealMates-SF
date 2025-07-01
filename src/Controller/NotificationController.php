@@ -122,20 +122,11 @@ class NotificationController extends AbstractController
     public function clearRead(): JsonResponse
     {
         $user = $this->getUser();
-        
-        $notifications = $this->notificationRepository->createQueryBuilder('n')
-            ->where('n.user = :user')
-            ->andWhere('n.isRead = true')
-            ->setParameter('user', $user)
-            ->getQuery()
-            ->getResult();
+        $deletedCount = $this->notificationRepository->deleteReadForUser($user);
 
-        foreach ($notifications as $notification) {
-            $this->entityManager->remove($notification);
-        }
-
-        $this->entityManager->flush();
-
-        return $this->json(['success' => true, 'deleted' => count($notifications)]);
+        return $this->json([
+            'success' => true, 
+            'deleted' => $deletedCount
+        ]);
     }
 }
