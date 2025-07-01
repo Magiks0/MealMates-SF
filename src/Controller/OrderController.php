@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Order;
 use App\Entity\Product;
+use App\Enum\PurchaseStatus;
 use App\Repository\OrderRepository;
 use App\Repository\ProductRepository;
 use App\Repository\UserRepository;
@@ -55,7 +56,7 @@ class OrderController extends AbstractController
         $order = $orderRepository->findOneBy(['qrCodeToken' => $qrCodeToken]);
 
         try {
-            $order->setStatus(Order::STATUS_COMPLETED);
+            $order->setStatus(PurchaseStatus::COMPLETED);
             $this->entityManager->flush();
         } catch (\Exception $e){
             return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
