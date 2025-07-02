@@ -22,7 +22,7 @@ class Product
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['product:read', 'order:read'])]
+    #[Groups(['product:read', 'order:read', 'rating:read'])]
     private ?string $title = null;
 
     #[ORM\Column(length: 255)]
@@ -30,7 +30,7 @@ class Product
     private ?string $description = null;
 
     #[ORM\Column]
-    #[Groups('product:read')]
+    #[Groups(['product:read', 'order:read'])]
     private ?int $quantity = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]

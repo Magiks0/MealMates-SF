@@ -2,10 +2,10 @@
 
 namespace App\Entity;
 
-use App\Repository\AvailabilityRepository;
 use App\Enum\DayOfWeek;
-use Doctrine\DBAL\Types\Types;
+use App\Repository\AvailabilityRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: AvailabilityRepository::class)]
 class Availability
@@ -15,65 +15,71 @@ class Availability
     #[ORM\Column]
     private ?int $id = null;
 
+    #[ORM\Column(enumType: DayOfWeek::class)]
+    #[Assert\NotBlank]
+    private ?DayOfWeek $dayOfWeek = null;
+
+    #[ORM\Column(type: 'time')]
+    #[Assert\NotBlank]
+    #[Assert\Type(\DateTimeInterface::class)]
+    private ?\DateTimeInterface $minTime = null;
+
+    #[ORM\Column(type: 'time')]
+    #[Assert\NotBlank]
+    #[Assert\Type(\DateTimeInterface::class)]
+    private ?\DateTimeInterface $maxTime = null;
+
     #[ORM\ManyToOne(inversedBy: 'availabilities')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?user $user = null;
-
-    #[ORM\Column(type: 'string', enumType: DayOfWeek::class)]
-    private DayOfWeek $dayOfWeek;
-
-    #[ORM\Column(type: Types::TIME_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $min_time = null;
-
-    #[ORM\Column(type: Types::TIME_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $max_time = null;
+    #[Assert\NotNull]
+    private ?User $user = null;
 
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getUser(): ?user
-    {
-        return $this->user;
-    }
-
-    public function setUser(?user $user): static
-    {
-        $this->user = $user;
-        return $this;
-    }
-
-    public function getDayOfWeek(): DayOfWeek
+    public function getDayOfWeek(): ?DayOfWeek
     {
         return $this->dayOfWeek;
     }
 
-    public function setDayOfWeek(DayOfWeek $dayOfWeek): self
+    public function setDayOfWeek(DayOfWeek|string $dayOfWeek): self
     {
-        $this->dayOfWeek = $dayOfWeek;
+        $this->dayOfWeek = is_string($dayOfWeek) ? DayOfWeek::from($dayOfWeek) : $dayOfWeek;
         return $this;
     }
 
     public function getMinTime(): ?\DateTimeInterface
     {
-        return $this->min_time;
+        return $this->minTime;
     }
 
-    public function setMinTime(?\DateTimeInterface $min_time): static
+    public function setMinTime(\DateTimeInterface|string|null $minTime): self
     {
-        $this->min_time = $min_time;
+        $this->minTime = is_string($minTime) ? new \DateTime($minTime) : $minTime;
         return $this;
     }
 
     public function getMaxTime(): ?\DateTimeInterface
     {
-        return $this->max_time;
+        return $this->maxTime;
     }
 
-    public function setMaxTime(?\DateTimeInterface $max_time): static
+    public function setMaxTime(\DateTimeInterface|string|null $maxTime): self
     {
-        $this->max_time = $max_time;
+        $this->maxTime = is_string($maxTime) ? new \DateTime($maxTime) : $maxTime;
+        return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): self
+    {
+        $this->user = $user;
         return $this;
     }
 }

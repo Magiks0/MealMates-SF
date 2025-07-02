@@ -39,11 +39,12 @@ class ProductRepository extends ServiceEntityRepository
                 ->setParameter('maxPrice', $filters['maxPrice']);
         }
 
-        if (!empty($filters['dietary'])) {
+        if (!empty($filters['dietaries'])) {
+            $dietaryIds = explode(',', $filters['dietaries']);
             $qb
                 ->join('p.dietaries', 'd')
-                ->andWhere('d.name = :dietetic')
-                ->setParameter('dietetic', $filters['dietetic']);
+                ->andWhere('d.id IN (:dietaries)')
+                ->setParameter('dietaries', $dietaryIds);
         }
 
         if (!empty($filters['peremptionDate'])) {
@@ -75,6 +76,12 @@ class ProductRepository extends ServiceEntityRepository
                 ->setParameter('kw', '%' . mb_strtolower($kw) . '%');
         }
 
+        if ($user) {
+            $qb->leftJoin('App\Entity\FavoriteProduct', 'fav', 'WITH', 'fav.product = p AND fav.user = :currentUser')
+                ->setParameter('currentUser', $user)
+                ->addSelect('CASE WHEN fav.id IS NOT NULL THEN true ELSE false END as HIDDEN isFavorite');
+        }
+
         $qb->innerJoin('p.user', 'u')
             ->andWhere('u.id NOT LIKE :userId')
             ->setParameter('userId', $user->getId());
@@ -86,12 +93,12 @@ class ProductRepository extends ServiceEntityRepository
     {
         $kmInLat = 0.009; // Environ 1km en latitude
         $kmInLon = 0.009 / cos(deg2rad($latitude)); // Ajustement pour la longitude basé sur la latitude
-
+        
         $latMin = $latitude - ($radius * $kmInLat);
         $latMax = $latitude + ($radius * $kmInLat);
         $lonMin = $longitude - ($radius * $kmInLon);
         $lonMax = $longitude + ($radius * $kmInLon);
-
+        
         $qb = $this->createQueryBuilder('p')
             ->join('p.address', 'a')
             ->where('a.latitude BETWEEN :latMin AND :latMax')
@@ -101,7 +108,7 @@ class ProductRepository extends ServiceEntityRepository
             ->setParameter('lonMin', $lonMin)
             ->setParameter('lonMax', $lonMax)
             ->orderBy('p.createdAt', 'DESC');
-
+        
         return $qb->getQuery()->getResult();
     }
 
