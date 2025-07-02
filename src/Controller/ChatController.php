@@ -108,6 +108,7 @@ class ChatController extends AbstractController
 
         $result = [
             'id' => $chat->getId(),
+            'currentUser' => $currentUser === $chat->getProduct()->getUser() ? 'seller' : 'buyer',
             'otherUser' => [
                 'id' => $otherUser->getId(),
                 'username' => $otherUser->getUsername(),
